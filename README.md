@@ -119,12 +119,30 @@ http://127.0.0.1:8002/admin
 
 ---
 
-## 4. 小程序端对接说明
+## 4. 小程序端调试
 
-修改 `miniprogram/app.js` 中的 `host`：
+本仓库已包含完整小程序源码（来自源项目，`miniprogram/` 目录），微信开发者工具**直接打开仓库根目录**即可（`project.config.json` 在根目录，`miniprogramRoot` 指向 `miniprogram/`）。
+
+本地调试步骤：
+
+1. 先启动后端：`.venv/bin/python run.py`（监听 127.0.0.1:8002）
+2. 微信开发者工具导入本仓库根目录
+3. `project.config.json` 已设 `urlCheck: false`（不校验合法域名），`miniprogram/app.js` 中 `host`/`staticHost` 已指向 `http://127.0.0.1:8002`，可直接联调
+4. 真机预览需在「详情 → 本地设置」勾选「不校验合法域名…」
+
+注意事项：
+
+- `project.config.json` 里的 `appid` 是原项目作者的（`wx915afa9083177059`），**登录获取 openid 需要换成自己的小程序 AppID**（并在 `.env` 中配置对应 `APPID`/`SECRET`）。开发调试页面 UI 可先用测试号
+- 轮播图等图片资源存放在后端 `images/` 目录（`GET /images/` 静态服务），演示库引用的 `s1.jpg` 等需要自行上传
+- 原项目小班/私教/公告等页面仍调旧版 `v1/*` 接口，当前后端未实现这些路由，页面会显示空数据；核心链路（首页/团课约课/取消/管理端）已全部打通
+
+## 4.1 小程序端上线对接
+
+修改 `miniprogram/app.js` 中的 `host` 与 `staticHost`：
 
 ```js
 host: 'https://你的域名',
+staticHost: 'https://你的域名',
 ```
 
 后端默认监听 `127.0.0.1:8002`，生产环境需要：
@@ -133,8 +151,6 @@ host: 'https://你的域名',
 2. Nginx 反向代理 + HTTPS 证书（小程序强制 HTTPS）
 3. 在微信公众平台配置 `request 合法域名` 和 `uploadFile 合法域名`
 4. 把 `APPID` / `SECRET` 环境变量设为自己的小程序凭证
-
-注意：原项目小班/私教/公告等页面仍调旧版 `v1/*` 接口，这些路由当前 Rust 后端也没有实现；本次 FastAPI 后端按原 Rust 路由完整迁移，后续如需补全 `v1/*` 业务，可在此基础上继续扩展。
 
 ---
 
@@ -173,6 +189,14 @@ yoga-server/
 │   ├── index.html
 │   ├── admin.css
 │   └── admin.js
+├── miniprogram/            # 微信小程序源码（来自源项目）
+│   ├── app.js / app.json
+│   ├── pages/              # 19 个页面
+│   ├── components / custom-tab-bar
+│   ├── pkg/                # Rust 编译的 WASM 前端逻辑（源项目自带）
+│   └── images / wemark / utils
+├── project.config.json     # 微信开发者工具项目配置（打开仓库根目录即导入）
+├── docs/                   # 需求文档 / 部署指南 / MySQL 迁移脚本
 ├── run.py                  # 启动脚本
 ├── requirements.txt
 ├── PingFang.ttf            # 课表图片字体

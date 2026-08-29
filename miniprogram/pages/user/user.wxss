@@ -1,0 +1,23 @@
+page {
+    background-color: #f2f2f2;
+    display: flex;
+    flex-direction: column;
+    /* padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); */
+}
+.action {
+    height: 64rpx;
+    min-width: 64rpx;
+    padding: 68rpx 0 0;
+    font-size: 24rpx;
+    line-height: 32rpx;
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background-position: center 8rpx;
+    background-size: 48rpx 48rpx;
+    background-repeat: no-repeat;
+    text-align: center;
+    color: #333;
+  }
+  

@@ -1,0 +1,96 @@
+@-webkit-keyframes spinner {
+    0% {
+        -webkit-transform: rotate(0deg)
+    }
+
+    100% {
+        -webkit-transform: rotate(1turn)
+    }
+}
+
+
+.loading-wrapper {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 66%;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-size: 28rpx;
+    color: rgba(15, 15, 15, .6)
+}
+
+@keyframes spinner {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg)
+    }
+
+    100% {
+        -webkit-transform: rotate(1turn);
+        transform: rotate(1turn)
+    }
+}
+
+.spinner {
+    display: block;
+    box-sizing: border-box;
+    margin: 12px auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #eee;
+    border-top-color: #666;
+    -webkit-animation: spinner .8s linear infinite;
+    animation: spinner .8s linear infinite
+}
+
+.grid-wrapper {
+    margin: 40rpx 48rpx 48rpx;
+}
+
+.grid-title {
+    font-size: 32rpx;
+    line-height: 40rpx;
+    margin-bottom: 48rpx;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    font-size: 28rpx;
+    border: 1rpx solid #dadce0;
+    background: #dadce0;
+    gap: 1rpx;
+    border-radius: 16rpx;
+    overflow: hidden;
+}
+
+.grid>view {
+    background: #fff;
+    height: 72rpx;
+    line-height: 72rpx;
+    text-align: center;
+}
+
+.grid>view.selected {
+    background-color: #e8f0fe;
+    color: #1967d2;
+}
+
+.button {
+    background: rgb(24, 90, 188);
+    border-radius: 36rpx;
+    font-size: 28rpx;
+    line-height: 72rpx;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 48rpx 0;
+}

@@ -1,0 +1,40 @@
+<view style="{{enabled?'':'display:none'}}">
+    <view class="wrapper" style="height:{{navigationHeight}}px;padding-top:{{navigationTop}}px;">
+        <view class="item-wrapper" style="height:{{navigationHeight}}px;padding-left:{{navigationPaddingLeft}}px">
+            <view class="navigation-title" style="font-size:{{navigationTitleFontSize}}px;line-height:{{navigationTitleFontSize}}px;">
+                {{app.globalData.title}}
+            </view>
+            <swiper style="font-size:{{navigationSubTitleFontSize}}px;height:{{navigationSubTitleFontSize*1.5}}px" class="swiper" vertical="true" circular="true" duration="300" autoplay="true" interval="3000">
+                <swiper-item>{{weather}}</swiper-item>
+                <swiper-item>{{date}}</swiper-item>
+                <swiper-item>{{bj}}</swiper-item>
+            </swiper>
+        </view>
+    </view>
+    <swiper class="photo-swiper" indicator-dots="true" indicator-active-color="#fff" autoplay circular>
+        <swiper-item wx:for="{{poster}}" wx:key="id">
+            <image class="photo-image" src="{{app.globalData.staticHost}}/images/{{item.image}}"></image>
+        </swiper-item>
+    </swiper>
+    <home-actions items="{{actions}}" app="{{app}}" bind:submit="onHomeActionsSubmit"></home-actions>
+    <gift slogan="{{market.slogan}}" app="{{app}}" bind:submit="navigate" data-href="/pages/market/market"></gift>
+    <teacher items="{{teachers}}" app="{{app}}" bind:submit="onTeacherSubmit"></teacher>
+    <home-booked items="{{booked}}" app="{{app}}" bind:submit="onHomeBookedSubmit"></home-booked>
+    <!-- <home-notice items="{{notices}}" app="{{app}}" bind:submit="onHomeNoticeSubmit"></home-notice> -->
+    <view class="title">公告</view>
+    <view style="background-color: #fff;padding:26rpx 0 32rpx;">
+        <view class="notice-item" wx:for="{{notices}}" wx:key="id" data-id="{{item.id}}" bindtap="navigate">
+            <view class="notice-item-title">{{item.title}}</view>
+            <view class="notice-item-subtitle">{{item.timeago}}</view>
+        </view>
+    </view>
+    <view class="copyright">版权归晨蕴约课工具所有</view>
+    <!-- 预留底部栏的空间 -->
+    <view style="height: 96rpx"></view>
+</view>
+<view style="{{enabled?'display:none':''}}">
+    <view class="loading-wrapper">
+        <view class="spinner"></view>
+        <view>加载中...</view>
+    </view>
+</view>

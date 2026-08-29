@@ -1,0 +1,7 @@
+{
+	"navigationBarBackgroundColor": "#ffffff",
+	"usingComponents": {
+		"spinner": "../../components/spinner/spinner",
+		"teacher-buttons": "../../components/teacher-buttons/teacher-buttons"
+	}
+}

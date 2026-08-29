@@ -1,0 +1,31 @@
+<view class="{{hidden?'disabled':''}}">
+    <view class="top" style="background-color:{{background}}">
+        <image class="top-image" src="{{app.globalData.staticHost}}/images/{{thumbnail}}" />
+    </view>
+    <view class="wrapper">
+        <view class="header-action-wrapper">
+            <view class="gap"></view>
+            <view class="lesson-action" data-href="/pages/adminUpdateLesson/adminUpdateLesson?id={{id}}" bind:tap="navigate">编辑</view>
+        </view>
+        <view class="title">{{lesson_name}}</view>
+        <view class="header-subtitle">{{teacher_name}}</view>
+        <view class="header-date">
+            <view class="header-date-icon"></view>
+            <view>{{date}}</view>
+        </view>
+        <view style="height:16rpx;margin:0 -32rpx;background-color:#f1f3f4"></view>
+        <view class="subtitle">学员</view>
+        <view class="user-item" wx:for="{{students}}" wx:key="reservation_id">
+            <image class="user-item-image" src="{{item.avatar_url}}"></image>
+            <view class="user-item-text">{{item.nick_name}}</view>
+            <view class="gap"></view>
+            <view class="user-item-action" data-name="{{item.nick_name}}" data-id="{{item.reservation_id}}" catch:tap="onDeleteUser">
+                删除
+            </view>
+        </view>
+    </view>
+    <view style="height:16rpx;margin:0 -32rpx;background-color:#f1f3f4"></view>
+    <view style="padding:32rpx 32rpx">
+        <view class="button-delete" bind:tap="onDeleteLesson">{{hidden?"开课":"停课"}}</view>
+    </view>
+</view>

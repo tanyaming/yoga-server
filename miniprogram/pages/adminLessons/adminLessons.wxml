@@ -1,0 +1,32 @@
+<view class="title">课程</view>
+<view class="actions">
+    <view wx:for="{{indexs}}" wx:key="index" class="action {{selected===index&&'selected'}}" data-id="{{index}}" bind:tap="onIndex">
+        {{item}}
+    </view>
+</view>
+<view class="items">
+    <view wx:if="{{lessons}}" wx:for="{{lessons}}" wx:key="course_id" class="item" data-href="/pages/adminLesson/adminLesson?id={{item.course_id}}" bind:tap="navigate">
+        <view class="item-body {{item.expired?'disabled':''}}">
+            <image class="item-body-image" src="{{app.globalData.staticHost}}/images/{{item.thumbnail}}"></image>
+            <view class="item-body-left">
+                <view class="item-body-line">
+                    <view class="item-body-text">{{item.teacher_name}}</view>
+                    <view>{{item.date}}</view>
+                </view>
+                <view class="item-body-line">
+                    <view class="item-text">{{item.lesson_name}}</view>
+                </view>
+                <view style="flex-grow:1"></view>
+                <view class="item-body-line">
+                    <view style="flex-grow:1"></view>
+                    <view wx:if="{{item.expired}}">已完成</view>
+                    <view wx:else>{{item.dif}}</view>
+               
+               </view>
+            </view>
+        </view>
+    </view>
+    <view wx:if="{{!lessons}}">
+        <view  class="not-found-message">假日请注意休息</view>
+    </view>
+</view>

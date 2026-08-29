@@ -37,3 +37,10 @@ async def ping():
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 if WEB_DIR.is_dir():
     app.mount("/admin", StaticFiles(directory=str(WEB_DIR), html=True), name="admin")
+
+# 上传图片静态服务：/images → IMAGE_DIR（对应原部署中 Nginx 的 /images 静态目录）
+from . import config  # noqa: E402
+
+IMAGE_PATH = Path(config.IMAGE_DIR)
+IMAGE_PATH.mkdir(parents=True, exist_ok=True)
+app.mount("/images", StaticFiles(directory=str(IMAGE_PATH)), name="images")

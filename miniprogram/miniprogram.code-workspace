@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "..\\WebAssembly\\admin"
+		},
+		{
+			"path": "..\\WebAssembly\\weixin"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "admin"
+	}
+}

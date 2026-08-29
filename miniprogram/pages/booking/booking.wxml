@@ -1,0 +1,42 @@
+<booking-bar app="{{app}}" bind:submit="onBookingBarSubmit"></booking-bar>
+<daily-schedule app="{{app}}" offset="{{offset}}" bind:submit="onDailyScheduleSubmit" style="background:#fff"></daily-schedule>
+<view wx:if="{{holiday}}" class="empty-container">
+  <view>
+    <image class="empty-picture" src="../../images/smile.svg"></image>
+    <view class="empty-text">假日注意休息</view>
+  </view>
+</view>
+<view wx:elif="{{loading}}" class="loading">
+  <spinner></spinner>
+  <view class="loading-description">正在加载...</view>
+</view>
+<view class="item-container">
+  <view class="item-wrapper {{(item.mode&1)?'disabled':''}}" wx:for="{{lessons}}" wx:key="course_id">
+    <view class="item">
+      <image class="item-image" src="{{app.globalData.staticHost}}/images/{{item.thumbnail}}"></image>
+    </view>
+    <view class="right">
+      <view class="text-time">
+        {{item.time}}
+        <text>{{item.teacher_name}}</text>
+      </view>
+      <view class="text-lesson">{{item.lesson_name}}</view>
+      <view class="sub-left">
+        <text>{{item.teacherName}}</text>
+        <text wx:if="{{!(item.mode&31)}}">已预约 {{item.users.length||0}}/{{item.peoples}}</text>
+      </view>
+      <view class="sub-right {{(item.mode==32)?'sub-right-btn':''}}" data-id="{{item.course_id}}" data-bookid="{{item.reservation_id}}" data-mode="{{item.mode}}" bindtap="onClick">
+        {{item.label}}
+      </view>
+    </view>
+    <view wx:if="{{!(item.mode&1) &&item.users}}" class="students">
+      <image wx:for="{{item.users}}" data-name="{{item.nick_name}}" data-image="{{item.avatar_url}}" class="students-image" src="{{item.avatar_url}}" bind:tap="onPreview"></image>
+    </view>
+  </view>
+</view>
+<view wx:if="{{isPreviewing}}" class="previewer" bind:tap="onClosePreview">
+  <view class="previewer-image-wrapper">
+    <image class="previewer-image" src="{{previewImage}}"></image>
+    <view class="previewer-text">{{previewText}}</view>
+  </view>
+</view>
