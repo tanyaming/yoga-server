@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>晨蕴瑜伽 · 管理后台</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- 登录层 -->
+<div id="login-mask" class="login-mask hidden">
+  <div class="login-card">
+    <div class="login-logo">晨蕴瑜伽</div>
+    <div class="login-sub">约课系统 · 管理后台</div>
+    <input id="login-openid" type="text" placeholder="管理员 OpenID" autocomplete="off">
+    <button id="login-btn" class="btn primary block">登 录</button>
+    <button id="login-demo" class="btn ghost block">使用演示管理员登录</button>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
+
+<div id="app" class="layout hidden">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">晨</div>
+      <div class="brand-text">
+        <div class="brand-name">晨蕴瑜伽</div>
+        <div class="brand-sub">管理后台</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="nav-item active" data-page="dashboard"><span class="nav-ico">◉</span>概览</a>
+      <a class="nav-item" data-page="courses"><span class="nav-ico">▤</span>课程管理</a>
+      <a class="nav-item" data-page="members"><span class="nav-ico">☰</span>会员管理</a>
+      <a class="nav-item" data-page="schedule"><span class="nav-ico">▦</span>周课表</a>
+      <a class="nav-item" data-page="basis"><span class="nav-ico">◇</span>基础数据</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-chip">
+        <img id="admin-avatar" class="avatar" src="" onerror="this.style.visibility='hidden'">
+        <span id="admin-name">管理员</span>
+      </div>
+      <button id="logout-btn" class="btn ghost small">退出登录</button>
+    </div>
+  </aside>
+
+  <!-- 主区域 -->
+  <main class="main">
+    <!-- 概览 -->
+    <section id="page-dashboard" class="page">
+      <h2 class="page-title">概览</h2>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num" id="st-courses">-</div><div class="stat-label">本周课程</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-bookings">-</div><div class="stat-label">本周预约人次</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-members">-</div><div class="stat-label">会员总数</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-coaches">-</div><div class="stat-label">教练</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-lessons">-</div><div class="stat-label">课程种类</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-notices">-</div><div class="stat-label">公告</div></div>
+      </div>
+      <div class="panel-grid">
+        <div class="panel">
+          <div class="panel-head">最近约课</div>
+          <ul id="dash-booked" class="list"><li class="empty">暂无数据</li></ul>
+        </div>
+        <div class="panel">
+          <div class="panel-head">最新公告</div>
+          <ul id="dash-notices" class="list"><li class="empty">暂无数据</li></ul>
+        </div>
+        <div class="panel">
+          <div class="panel-head">教练团队</div>
+          <ul id="dash-teachers" class="list"><li class="empty">暂无数据</li></ul>
+        </div>
+        <div class="panel">
+          <div class="panel-head">本周课程概览</div>
+          <ul id="dash-week" class="list"><li class="empty">暂无数据</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 课程管理 -->
+    <section id="page-courses" class="page hidden">
+      <div class="page-row">
+        <h2 class="page-title">课程管理</h2>
+        <div class="week-nav">
+          <button class="btn ghost small" id="week-prev">‹ 上一周</button>
+          <span id="week-label" class="week-label"></span>
+          <button class="btn ghost small" id="week-next">下一周 ›</button>
+          <button class="btn ghost small" id="week-this">本周</button>
+        </div>
+        <button id="btn-batch" class="btn primary">+ 批量排课</button>
+      </div>
+      <div class="toolbar">
+        <label>类型筛选
+          <select id="filter-type">
+            <option value="0">全部</option>
+            <option value="4">团课</option>
+            <option value="1">小班</option>
+          </select>
+        </label>
+        <span class="toolbar-tip">停课后课程在小程序端隐藏显示；删除会连带清理该课全部预约记录</span>
+      </div>
+      <table class="table" id="course-table">
+        <thead>
+          <tr>
+            <th>日期</th><th>时间</th><th>课程</th><th>教练</th><th>类型</th>
+            <th>预约</th><th>状态</th><th class="th-actions">操作</th>
+          </tr>
+        </thead>
+        <tbody><tr><td colspan="8" class="empty">加载中…</td></tr></tbody>
+      </table>
+    </section>
+
+    <!-- 会员管理 -->
+    <section id="page-members" class="page hidden">
+      <h2 class="page-title">会员管理</h2>
+      <table class="table" id="member-table">
+        <thead><tr><th>头像</th><th>ID</th><th>昵称</th><th>注册时间</th><th class="th-actions">操作</th></tr></thead>
+        <tbody><tr><td colspan="5" class="empty">加载中…</td></tr></tbody>
+      </table>
+    </section>
+
+    <!-- 周课表 -->
+    <section id="page-schedule" class="page hidden">
+      <h2 class="page-title">周课表</h2>
+      <p class="page-desc">按周课表模板自动生成，可用于小程序端分享与朋友圈宣传图。</p>
+      <div class="schedule-wrap">
+        <img id="schedule-img" src="/yoga/admin/schedule" alt="周课表">
+        <a class="btn primary" href="/yoga/admin/schedule" download="周课表.png" target="_blank">下载图片</a>
+      </div>
+    </section>
+
+    <!-- 基础数据 -->
+    <section id="page-basis" class="page hidden">
+      <h2 class="page-title">基础数据</h2>
+      <div class="panel-grid">
+        <div class="panel">
+          <div class="panel-head">课程库</div>
+          <ul id="basis-lessons" class="list"><li class="empty">暂无数据</li></ul>
+        </div>
+        <div class="panel">
+          <div class="panel-head">教练</div>
+          <ul id="basis-coaches" class="list"><li class="empty">暂无数据</li></ul>
+        </div>
+      </div>
+      <p class="page-desc">课程库与教练目前通过数据库维护；新增后即可在批量排课中选择。</p>
+    </section>
+  </main>
+</div>
+
+<!-- 会员详情抽屉 -->
+<div id="member-drawer" class="drawer-mask hidden">
+  <div class="drawer">
+    <div class="drawer-head">
+      <span id="drawer-title">会员详情</span>
+      <button class="btn ghost small" id="drawer-close">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="profile">
+        <img id="drawer-avatar" class="avatar lg" onerror="this.style.visibility='hidden'">
+        <div>
+          <div class="profile-name" id="drawer-name"></div>
+          <div class="profile-meta" id="drawer-meta"></div>
+        </div>
+      </div>
+      <div class="stat-mini">
+        <div><b id="drawer-big">0</b><span>团课</span></div>
+        <div><b id="drawer-small">0</b><span>小班</span></div>
+        <div><b id="drawer-one">0</b><span>私教</span></div>
+      </div>
+      <div class="panel-head">约课记录</div>
+      <table class="table compact">
+        <thead><tr><th>日期</th><th>时间</th><th>课程</th><th>教练</th><th>类型</th></tr></thead>
+        <tbody id="drawer-records"><tr><td colspan="5" class="empty">暂无约课记录</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 批量排课弹窗 -->
+<div id="batch-modal" class="drawer-mask hidden">
+  <div class="modal">
+    <div class="drawer-head">
+      <span>批量排课（一年内每周）</span>
+      <button class="btn ghost small" data-close="batch-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <label>星期
+          <select id="batch-week">
+            <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
+            <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option>
+            <option value="0">周日</option>
+          </select>
+        </label>
+        <label>类型
+          <select id="batch-type"><option value="4">团课</option><option value="1">小班</option></select>
+        </label>
+        <label>课程
+          <select id="batch-lesson"></select>
+        </label>
+        <label>教练
+          <select id="batch-teacher"></select>
+        </label>
+        <label>开始时间 <input id="batch-start" type="time" value="09:00"></label>
+        <label>结束时间 <input id="batch-end" type="time" value="10:30"></label>
+        <label>容量（人数）<input id="batch-peoples" type="number" value="10" min="1"></label>
+      </div>
+      <div class="modal-tip">将从本周起、未来一年内每周的同一天各创建一节课。</div>
+      <div id="batch-result" class="modal-result"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close="batch-modal">取消</button>
+      <button class="btn primary" id="batch-submit">确认排课</button>
+    </div>
+  </div>
+</div>
+
+<!-- 系列修改弹窗 -->
+<div id="edit-modal" class="drawer-mask hidden">
+  <div class="modal">
+    <div class="drawer-head">
+      <span>系列修改课程</span>
+      <button class="btn ghost small" data-close="edit-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tip" id="edit-target-tip"></div>
+      <div class="form-grid">
+        <label>课程 <select id="edit-lesson"></select></label>
+        <label>教练 <select id="edit-teacher"></select></label>
+        <label>类型
+          <select id="edit-type"><option value="4">团课</option><option value="1">小班</option></select>
+        </label>
+        <label>开始时间 <input id="edit-start" type="time"></label>
+        <label>结束时间 <input id="edit-end" type="time"></label>
+        <label>容量（人数）<input id="edit-peoples" type="number" min="1"></label>
+      </div>
+      <div class="modal-tip">将更新该日期起、每周同一天、同时段同类型的所有课程（留空项不变）。</div>
+      <div id="edit-result" class="modal-result"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close="edit-modal">取消</button>
+      <button class="btn primary" id="edit-submit">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>

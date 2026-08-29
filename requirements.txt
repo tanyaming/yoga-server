@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pymysql
+dbutils
+httpx
+pillow
+python-multipart
+pytest
+requests

@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# 敏感配置与运行时数据
+.env
+images/
+*.log
+
+# 编辑器
+.DS_Store
+.idea/
+.vscode/
