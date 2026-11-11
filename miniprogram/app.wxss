@@ -1,0 +1,68 @@
+/* 全局样式 · 「冷底 × 原色」定稿配色（WXSS 用具体值） */
+page {
+  --canvas: #F1F7F7;
+  --paper: #FFFFFF;
+  --line: #E0EBED;
+  --ink: #27393B;
+  --ink-2: #5A7073;
+  --ink-3: #5F7579;
+  --pine: #123A2E;
+  --pine-3: #2A6E54;
+  --lime: #D9F26B;
+  --clay: #E08A63;
+  --mist: #7FA8B8;
+  --success: #3E8C64;
+  background: #F1F7F7;
+  color: #27393B;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+/* 通用卡片 */
+.card {
+  background: #FFFFFF;
+  border: 1rpx solid #E0EBED;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin: 20rpx 24rpx;
+}
+
+/* 通用按钮 */
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 16rpx; font-size: 30rpx; font-weight: 600; padding: 22rpx;
+}
+.btn-primary { background: #123A2E; color: #D9F26B; }
+.btn-secondary { background: #FFFFFF; color: #27393B; border: 1rpx solid #E0EBED; }
+.btn-disabled { opacity: .5; }
+
+/* 标签 */
+.tag {
+  display: inline-block; padding: 4rpx 16rpx; border-radius: 999rpx; font-size: 22rpx;
+}
+.tag-green { background: #E9F7BE; color: #5A6B14; }
+.tag-clay { background: #F8E7DE; color: #A4522C; }
+.tag-mist { background: #E6EFF2; color: #3C6B7E; }
+.tag-gray { background: #F5FAF9; color: #5F7579; border: 1rpx solid #E0EBED; }
+
+/* 空态 */
+.empty { text-align: center; color: #5F7579; padding: 80rpx 40rpx; font-size: 26rpx; }
+
+/* 弹窗遮罩 */
+.mask {
+  position: fixed; inset: 0; background: rgba(18, 58, 46, .4);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.dialog {
+  background: #FFFFFF; border-radius: 24rpx; width: 620rpx; max-width: 90%;
+  padding: 40rpx;
+}
+.dialog-title { margin: 0 0 24rpx; font-size: 32rpx; font-weight: 700; color: #27393B; }
+
+/* 表单 */
+.field { margin-bottom: 24rpx; }
+.field label { display: block; font-size: 26rpx; color: #5A7073; margin-bottom: 12rpx; }
+.field input {
+  width: 100%; padding: 20rpx; border: 1rpx solid #E0EBED; border-radius: 16rpx;
+  font-size: 30rpx; background: #FFFFFF;
+}

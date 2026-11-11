@@ -1,0 +1,50 @@
+<view class="page">
+  <!-- 顶部：会员与权益 -->
+  <view class="hero">
+    <view class="hero-greet">
+      <view class="hero-name">{{member.name || '欢迎'}}</view>
+      <view class="hero-sub">剩余课时</view>
+    </view>
+    <view class="hero-bal">
+      <text class="bal-num">{{remainSessions}}</text>
+      <text class="bal-unit">节</text>
+    </view>
+  </view>
+
+  <!-- 课程列表 -->
+  <view class="section-title">今日课程</view>
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{sessions.length === 0}}" class="empty">今日暂无课程</view>
+  <view wx:else class="course-list">
+    <view wx:for="{{sessions}}" wx:key="id" class="course-card" bindtap="goBooking" data-id="{{item.id}}">
+      <view class="course-time">
+        <text class="t-hh">{{item.starts_at}}</text>
+      </view>
+      <view class="course-body">
+        <view class="course-name">{{item.course_name}}</view>
+        <view class="course-meta">{{item.booked}}/{{item.capacity}} 人</view>
+      </view>
+      <view class="course-state">
+        <text wx:if="{{item.my_status === 'BOOKED'}}" class="tag tag-green">已预约</text>
+        <text wx:elif="{{item.my_status === 'WAITLIST'}}" class="tag tag-mist">候补</text>
+        <text wx:elif="{{item.status === 'FULL'}}" class="tag tag-clay">已满</text>
+        <text wx:else class="tag tag-green">可约</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 绑定弹窗 -->
+  <view wx:if="{{showBind}}" class="mask">
+    <view class="dialog">
+      <view class="dialog-title">绑定会员</view>
+      <view class="field"><label>手机号</label>
+        <input value="{{bindPhone}}" data-k="bindPhone" bindinput="onBindInput" type="number" />
+      </view>
+      <view class="field"><label>姓名</label>
+        <input value="{{bindName}}" data-k="bindName" bindinput="onBindInput" />
+      </view>
+      <view wx:if="{{bindErr}}" style="color:#C7503A;font-size:24rpx;margin-bottom:12rpx">{{bindErr}}</view>
+      <view class="btn btn-primary" bindtap="submitBind">绑定并进入</view>
+    </view>
+  </view>
+</view>

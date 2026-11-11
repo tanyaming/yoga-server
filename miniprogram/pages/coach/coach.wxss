@@ -1,0 +1,38 @@
+.page { padding-bottom: 60rpx; }
+
+.login { padding: 80rpx 40rpx; }
+.login-title { font-size: 40rpx; font-weight: 700; color: #123A2E; margin-bottom: 40rpx; }
+.login-err { color: #C7503A; font-size: 24rpx; margin-bottom: 16rpx; }
+.login-hint { text-align: center; color: #5F7579; font-size: 24rpx; margin-top: 20rpx; }
+
+.coach-top {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #123A2E; color: #FFFFFF; padding: 36rpx 32rpx;
+}
+.coach-name { font-size: 34rpx; font-weight: 700; }
+.coach-sub { font-size: 24rpx; color: rgba(255,255,255,.65); }
+.logout { font-size: 24rpx; color: #D9F26B; padding: 8rpx 20rpx; border: 1rpx solid rgba(255,255,255,.4); border-radius: 999rpx; }
+
+.session-card { display: flex; align-items: center; gap: 20rpx; }
+.s-time { flex: none; font-size: 32rpx; font-weight: 700; color: #123A2E; width: 120rpx; }
+.s-body { flex: 1; }
+.s-name { font-size: 30rpx; font-weight: 600; }
+.s-meta { font-size: 24rpx; color: #5A7073; }
+.s-state { flex: none; }
+
+.roster { max-height: 80vh; overflow-y: auto; }
+.roster-head { margin-bottom: 16rpx; }
+.r-title { font-size: 34rpx; font-weight: 700; color: #27393B; }
+.r-time { display: block; font-size: 24rpx; color: #5A7073; }
+.r-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24rpx 0; border-bottom: 1rpx solid #EDF3F3;
+}
+.r-name { font-size: 30rpx; font-weight: 600; color: #27393B; }
+.r-phone { font-size: 24rpx; color: #5F7579; }
+.r-actions { display: flex; gap: 16rpx; }
+.r-btn {
+  padding: 10rpx 24rpx; border-radius: 12rpx; font-size: 26rpx; font-weight: 600;
+}
+.r-btn.ok { background: #123A2E; color: #D9F26B; }
+.r-btn.no { background: #F8E7DE; color: #A4522C; }

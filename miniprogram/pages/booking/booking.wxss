@@ -1,0 +1,12 @@
+.page { padding: 24rpx; }
+
+.detail-card { background: #FFFFFF; border: 1rpx solid #E0EBED; border-radius: 24rpx; padding: 40rpx 32rpx; }
+.d-name { font-size: 40rpx; font-weight: 700; color: #27393B; margin-bottom: 24rpx; }
+.d-row { display: flex; justify-content: space-between; padding: 16rpx 0; font-size: 28rpx; color: #27393B; border-top: 1rpx solid #EDF3F3; }
+.d-label { color: #5A7073; }
+
+.result-tip {
+  margin: 24rpx 0; padding: 20rpx; border-radius: 16rpx; font-size: 26rpx;
+  background: #F5FAF9; color: #27393B;
+}
+.actions { margin-top: 40rpx; }

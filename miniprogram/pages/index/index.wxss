@@ -1,0 +1,27 @@
+.page { padding-bottom: 40rpx; }
+
+.hero {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #123A2E; color: #FFFFFF;
+  padding: 40rpx 32rpx; margin-bottom: 8rpx;
+}
+.hero-name { font-size: 34rpx; font-weight: 700; }
+.hero-sub { font-size: 24rpx; color: rgba(255,255,255,.65); margin-top: 4rpx; }
+.hero-bal { text-align: right; }
+.bal-num { font-size: 56rpx; font-weight: 700; color: #D9F26B; }
+.bal-unit { font-size: 26rpx; color: #D9F26B; margin-left: 6rpx; }
+
+.section-title { font-size: 26rpx; color: #5A7073; padding: 28rpx 32rpx 8rpx; }
+
+.course-list { padding: 0 24rpx; }
+.course-card {
+  display: flex; align-items: center; gap: 24rpx;
+  background: #FFFFFF; border: 1rpx solid #E0EBED; border-radius: 20rpx;
+  padding: 28rpx; margin-bottom: 20rpx;
+}
+.course-time { flex: none; width: 150rpx; }
+.t-hh { font-size: 32rpx; font-weight: 700; color: #27393B; }
+.course-body { flex: 1; }
+.course-name { font-size: 30rpx; font-weight: 600; color: #27393B; }
+.course-meta { font-size: 24rpx; color: #5A7073; margin-top: 4rpx; }
+.course-state { flex: none; }

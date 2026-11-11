@@ -1,0 +1,147 @@
+/* ============================================================
+   场馆连锁客户管理平台 · 设计系统 v1.0【已定稿 / 冻结】
+   风格名：冷底 × 原色（Blend）
+   定稿日期：2026-11-10   状态：FROZEN   适用范围：三端全部页面
+   ------------------------------------------------------------
+   页面底色 / 表面 / 线条 / 文字 / 柔光 = 版本三「晴空水润」
+   子组件（按钮 / 主卡 / 侧栏 / 选中态 / 状态标签）= 原版「静谧动能」
+   去 AI 味处理：无大写英文装饰、无同心圆环、无 Fraunces、
+   无暖色展台；宋体中文标题，线性 SVG 图标 + 文字状态表达。
+   ------------------------------------------------------------
+   v1.0 冻结修订（可访问性实测后修正，详见设计规范 §07）：
+   --ink-3 / --muted 由 2.75:1 / 2.27:1 提升至 ≥4.5:1；
+   新增 --success-ink 供小字环比使用；--water / --mint 限定仅作背景。
+   本文件为唯一风格来源，业务页面不得硬编码色值。
+   ============================================================ */
+
+:root{
+  /* —— V3 冷调底 —— */
+  --canvas:#F1F7F7;
+  --paper:#FFFFFF;
+  --paper-2:#F5FAF9;
+  --line:#E0EBED;
+  --line-2:#EDF3F3;
+  --white:#FFFFFF;
+  --ink:#27393B;          /* V3 冷墨主文字 · 12.11:1 AAA */
+  --ink-2:#5A7073;        /* 次要正文 · 5.25:1 AA */
+  --ink-3:#5F7579;        /* 辅助说明 · 4.88:1 AA（v1.0 由 #8BA0A2 修正）*/
+  --muted:#5F7579;        /* 占位/未选中 · 4.88:1 AA（v1.0 由 #9CB0B2 修正）*/
+  --disabled:#9CB0B2;     /* 仅禁用态与纯装饰，WCAG 1.4.3 豁免 */
+  --water:#7FA9B5;        /* V3 水蓝：仅背景柔光 / 描边 / 图表填充，禁止承载文字 */
+  --water-ink:#4C7B88;    /* 水蓝的文字版 · 4.67:1 AA，供标签与链接使用 */
+  --mint:#A9D7C9;         /* V3 薄荷：仅背景柔光，禁止承载文字 */
+
+  /* —— 原版组件色（完整保留）—— */
+  --pine:#123A2E;
+  --pine-2:#1B5540;
+  --pine-3:#2A6E54;
+  --lime:#D9F26B;
+  --lime-deep:#BFD842;
+  --clay:#E08A63;
+  --mist:#7FA8B8;
+  --danger:#C7503A;       /* 4.53:1 AA */
+  --success:#3E8C64;      /* 4.09:1：仅图标 / 描边 / 背景（非文本 ≥3:1）*/
+  --success-ink:#347A57;  /* 5.16:1 AA：小字环比、成功文案专用 */
+
+  /* —— 阴影改为水蓝调、更淡（V3 的通透）—— */
+  --sh-1:0 1px 2px rgba(61,110,121,.04),0 4px 14px rgba(61,110,121,.05);
+  --sh-2:0 8px 28px rgba(61,110,121,.10),0 2px 6px rgba(61,110,121,.05);
+  --sh-3:0 24px 64px rgba(39,57,59,.18);
+  --sh-lime:0 6px 18px rgba(191,216,66,.32);  /* 酸柠 CTA 原样保留 */
+
+  /* —— 字体：去掉 Fraunces，中文标题用宋体；数字等宽保留（功能需要）—— */
+  --f-display:"Songti SC","Noto Serif SC",serif;
+  --f-cn:"Songti SC","Noto Serif SC",serif;
+}
+
+/* ---------- 背景：V3 的冷调渐变与柔光 ---------- */
+body{background:linear-gradient(165deg,#F1F7F7 0%,#EAF4F3 52%,#F6FAFA 100%)}
+.stage{background:
+  radial-gradient(1100px 560px at 16% 0%,rgba(169,215,201,.26) 0%,transparent 62%),
+  radial-gradient(900px 700px at 94% 100%,rgba(127,169,181,.18) 0%,transparent 58%),
+  var(--canvas)}
+html.embed body{background:linear-gradient(165deg,#F1F7F7 0%,#EAF4F3 52%,#F6FAFA 100%)}
+html.embed .stage{background:var(--canvas)}
+
+.phone-screen{background:linear-gradient(180deg,#FFFFFF 0%,#F7FBFB 42%,#F1F8F7 100%)}
+.admin{background:linear-gradient(165deg,#F1F7F7 0%,#EAF4F3 60%,#F6FAFA 100%)}
+.admin-main{background:transparent}
+
+/* ---------- 组件面：纯白从冷底浮起，配细线 ---------- */
+.panel,.card,.tabbar,.topbar,.modal,.input,.select,.textarea,.search .input,.mini-select{background:var(--paper)}
+.phone-screen .app-scroll{background:transparent}
+.gcard,.comp,.principle,.type-card,.sw,.a11y-item{background:var(--paper)}
+
+/* ---------- 原版硬编码的浅绿底 → 冷浅蓝 ---------- */
+.person.on,.option.on,.member-card,.radio-cards label.on{background:#EDF6F5}
+.row-sel{background:#EDF6F5!important}
+.done-banner{background:rgba(62,140,100,.10)}
+.skeleton{background:linear-gradient(90deg,var(--paper-2) 25%,#E6F0F0 50%,var(--paper-2) 75%);background-size:200% 100%}
+
+/* ---------- 去 AI 味：移除装饰性元素 ---------- */
+.hero-card::before,.hero-card::after,.bal::before,.bal::after,.coach-top::after{display:none!important}
+.eyebrow,.hero .en,.app-header .en,.sec-head .sub{display:none}
+.list-label{font-size:0}
+.list-label::after{content:"今日排期";font-size:10px;letter-spacing:.04em;color:var(--ink-3);font-family:var(--f-body)}
+.flow-head .more{font-size:0}
+.flow-head .more::after{content:"查看全部 →";font-size:10px;color:var(--ink-3);font-family:var(--f-body)}
+.brand-sub{font-size:0}
+.brand-sub::after{content:"场馆管理平台";font-size:9px;letter-spacing:.04em;color:#89A99A}
+.bal .foot,.hero-foot,.c-time .mm,.c-meta,.seats,.p-meta,.f-meta,.opt-desc,.gmeta .cat,.coach-meta span,.panel-head .mono,.page-head .sub{
+  font-family:var(--f-body);letter-spacing:.02em}
+.nav-group{font-family:var(--f-body);letter-spacing:.06em}
+.panel svg g[stroke]{stroke:#E4EEEE}
+.panel svg g[font-family]{fill:var(--ink-3)}
+
+/* ---------- 修正：指标卡环比数字不换行 ---------- */
+.kpi .delta{white-space:nowrap;flex:none}
+.kpi .spark{width:70px;flex:none;height:26px}
+
+/* ---------- 去 AI 味：把余额提醒里的英文副标换成中文 ---------- */
+.alert .t2{font-size:0}
+.alert .t2::after{content:"团课通用卡 · 剩余课时";font-size:10px;color:#5C6C20;letter-spacing:.02em}
+.bal .foot,.hero-foot{letter-spacing:.02em}
+
+/* ---------- 状态色：原版语义不动，只把底色调到与冷底协调 ---------- */
+.chip-lime{background:rgba(217,242,107,.38)}
+.chip-pine{background:rgba(18,58,46,.09)}
+.chip-clay{background:rgba(224,138,99,.15)}
+.chip-mist{background:rgba(127,168,184,.18)}
+.chip-neutral{background:var(--paper-2);border-color:var(--line)}
+
+/* ---------- 深松绿结构性块的文字色（不被冷墨变量误伤） ---------- */
+.hero-card,.coach-top,.bal{color:var(--paper)}
+.sidebar nav a.on{color:var(--ink)}
+.btn-dark,.course .act{color:var(--paper)}
+
+/* ---------- 教练端顶栏：深色块保留，但加一层极淡冷光过渡 ---------- */
+.coach-top{box-shadow:inset 0 -1px 0 rgba(169,215,201,.16)}
+
+/* ---------- 可访问性：酸柠按钮在冷底上对比更强，无需调整 ---------- */
+.btn-primary{color:var(--ink)}
+.alert{color:var(--ink)}
+
+/* ============================================================
+   v1.0 冻结修订 · 文本对比度达标（实测值见设计规范 §07）
+   规则：正文文本 ≥4.5:1；层级由字号/字重/位置承担，不再靠压低对比度
+   ============================================================ */
+.delta{color:var(--success-ink)}                 /* 环比小字 5.16:1 */
+.chip-success{color:var(--success-ink)}         /* 成功标签文字 */
+.b-kick,.b-k2,.cat,.sec-kick{color:var(--water-ink)!important} /* 分组小标签 4.67:1 */
+.brand-sub::after{color:#A9C6BB}                /* 侧栏品牌副标 · 6.87:1 */
+.nav-group{color:#8CB3A1!important}              /* 侧栏分组小标题 · 由 4.39:1 修正至 5.4:1 */
+
+/* 禁用态与占位符：允许低于 4.5:1，但必须同时有非颜色提示 */
+.input:disabled,.select:disabled,.btn[disabled],.btn.is-disabled{color:var(--disabled)}
+.field-hint{color:var(--ink-2)}                 /* 表单提示改为达标色 */
+/* .field-error 保留 danger 色（4.53:1），错误必须同时有文案 + 图标，不靠颜色 alone */
+
+/* 焦点态：全站统一，键盘可见 */
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{
+  outline:2px solid var(--water-ink);outline-offset:2px}
+
+/* 水蓝 / 薄荷仅作背景的兜底约束（避免误用为文字色） */
+.bg-water,.bg-mint{color:var(--ink)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}

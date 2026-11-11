@@ -1,0 +1,14 @@
+{
+  "projectname": "素序瑜伽",
+  "description": "场馆连锁客户管理平台小程序（会员端 + 教练端）",
+  "appid": "wx61d138d7162201e6",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": true
+  },
+  "condition": {}
+}

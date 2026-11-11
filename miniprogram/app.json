@@ -1,0 +1,27 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/booking/booking",
+    "pages/wallet/wallet",
+    "pages/coach/coach"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#123A2E",
+    "navigationBarTitleText": "素序瑜伽",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F1F7F7",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#5A7073",
+    "selectedColor": "#123A2E",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "课程" },
+      { "pagePath": "pages/wallet/wallet", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

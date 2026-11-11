@@ -1,0 +1,22 @@
+<view class="page" wx:if="{{session}}">
+  <view class="detail-card">
+    <view class="d-name">{{session.course_name}}</view>
+    <view class="d-row"><text class="d-label">时间</text><text>{{session.starts_at}} - {{session.ends_at}}</text></view>
+    <view class="d-row"><text class="d-label">名额</text><text>{{session.booked}} / {{session.capacity}} 人</text></view>
+    <view class="d-row"><text class="d-label">状态</text>
+      <text wx:if="{{myStatus === 'BOOKED'}}" class="tag tag-green">已预约</text>
+      <text wx:elif="{{myStatus === 'WAITLIST'}}" class="tag tag-mist">候补中</text>
+      <text wx:elif="{{session.status === 'FULL'}}" class="tag tag-clay">已满</text>
+      <text wx:else class="tag tag-green">可预约</text>
+    </view>
+  </view>
+
+  <view wx:if="{{result}}" class="result-tip">{{result}}</view>
+
+  <view class="actions">
+    <view wx:if="{{!myStatus}}" class="btn btn-primary" bindtap="confirmBook">确认约课</view>
+    <view wx:elif="{{myStatus === 'WAITLIST'}}" class="btn btn-secondary" bindtap="confirmCancel">取消候补</view>
+    <view wx:else class="btn btn-secondary" bindtap="confirmCancel">取消预约</view>
+  </view>
+</view>
+<view wx:else class="empty">加载中…</view>
