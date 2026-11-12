@@ -468,19 +468,20 @@ def _try_take_seat(db: Session, tenant_id: str, session_id: str) -> bool:
 
 
 def _take_seat(db: Session, tenant_id: str, session_id: str, session: ClassSession) -> str:
-    """返回 BOOKED 或 WAITLIST。占位失败先判定是否真满，再重试一次。"""
+    """返回 BOOKED 或 WAITLIST。
+
+    判定只依赖原子 UPDATE 的 rowcount（InnoDB 下条件 UPDATE 属「当前读」，
+    结果是权威的）。**不再用 ORM 重读后的 booked 做二次判定**：MySQL 默认
+    REPEATABLE READ，同一事务内重读仍返回事务开始时的快照，会把「已满」
+    误判为「未满」，进而重试失败抛 409 —— 并发满员时本该进候补的会员被报错。
+    SQLite 无 MVCC 快照，本地测不出该差异（生产 MySQL 8.4 实测复现）。
+
+    rowcount==0 的含义是「条件不成立」：booked 已达 capacity、或课节已取消。
+    课节取消在 book() 入口已拦截，此处按满员处理（进候补），不会静默占位。
+    """
     if _try_take_seat(db, tenant_id, session_id):
         return 'BOOKED'
-    # 条件 UPDATE 未命中：可能是真满员，也可能是并发窗口内的瞬时状态，必须重读判定
-    db.expire(session)
-    if int(session.booked) >= int(session.capacity):
-        return 'WAITLIST'
-    if _try_take_seat(db, tenant_id, session_id):
-        return 'BOOKED'
-    db.expire(session)
-    if int(session.booked) >= int(session.capacity):
-        return 'WAITLIST'
-    raise Conflict('课节名额状态冲突，请稍后重试')
+    return 'WAITLIST'
 
 
 def _write_enrollment(db: Session, tenant_id: str, member_id: str, session: ClassSession,
@@ -497,12 +498,17 @@ def _write_enrollment(db: Session, tenant_id: str, member_id: str, session: Clas
     """
     enrollment_id = reuse_id or random_id()
     if status == 'WAITLIST':
-        seq_value = (
-            select(func.coalesce(func.max(Enrollment.waitlist_seq), 0) + 1)
+        # 取号必须包一层派生表：MySQL 禁止在 UPDATE/INSERT 同一张表时，
+        # 子查询里直接引用该表（错误 1093 "can't specify target table for update
+        # in FROM clause"）。派生表会被物化成临时结果集，MySQL 8 与 SQLite 均支持。
+        # SQLite 原本允许裸子查询，本地测不出该差异（生产 MySQL 8.4 实测复现）。
+        _seq_inner = (
+            select((func.coalesce(func.max(Enrollment.waitlist_seq), 0) + 1).label('next_seq'))
             .where(Enrollment.session_id == session.id,
                    Enrollment.status == 'WAITLIST')
-            .scalar_subquery()
+            .subquery()
         )
+        seq_value = select(_seq_inner.c.next_seq).scalar_subquery()
     else:
         seq_value = 0
     try:

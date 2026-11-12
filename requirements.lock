@@ -1,0 +1,13 @@
+# 生产依赖锁（T-32）：精确版本，Python 3.13 实测通过
+# 生成方式：.venv/bin/pip freeze 后按运行必需项筛选
+# 注意：python-dotenv 必须显式声明（原 requirements.txt 靠 uvicorn[standard] 间接带入，属隐性依赖）
+fastapi==0.115.14
+uvicorn[standard]==0.34.3
+SQLAlchemy==2.0.57
+alembic==1.14.1
+pydantic==2.14.3
+PyJWT==2.15.1
+python-multipart==0.0.33
+requests==2.34.2
+PyMySQL==1.2.4
+python-dotenv==1.2.4
