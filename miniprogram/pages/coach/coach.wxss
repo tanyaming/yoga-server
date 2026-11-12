@@ -1,22 +1,95 @@
-/* 教练工作台：深绿顶栏（§6 定案）+ 64px 名单行 + 语义标签 */
-.page { padding-bottom: 60rpx; }
-.login { padding: 80rpx 40rpx; }
-.login-title { font-family: var(--f-cn); font-size: 40rpx; font-weight: 700; color: var(--pine); margin-bottom: 40rpx; }
-.login-err { color: var(--danger); font-size: 24rpx; margin-bottom: 16rpx; }
-.login-hint { text-align: center; color: var(--ink-3); font-size: 24rpx; margin-top: 20rpx; }
+/* 教练工作台 · 对齐《UI 设计规范 v1.0（FROZEN）》
+   §8 验收：业务样式零 #RRGGBB / rgba() 字面量，全部引用 app.wxss 的 var(--token) */
 
+.page { min-height: 100vh; padding-bottom: 48rpx; }
+
+/* ---------- 登录态：页面级冷调渐变 + 两处径向柔光（§2.2，渐变不进入组件） ---------- */
+.login-stage {
+  position: relative; min-height: 100vh; overflow: hidden;
+  background: linear-gradient(165deg, var(--canvas) 0%, var(--paper-2) 52%, var(--canvas) 100%);
+}
+.login-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(760rpx 420rpx at 16% 0%, var(--mint-wash) 0%, transparent 62%),
+    radial-gradient(680rpx 520rpx at 94% 100%, var(--pine-wash) 0%, transparent 58%);
+}
+.login-wrap { position: relative; z-index: 1; padding: 88rpx 40rpx 64rpx; }
+
+/* 标题：宋体 H2（§3），不与顶栏「教练工作台」重复 */
+.login-head { margin-bottom: 40rpx; }
+.login-h2 { font-family: var(--f-cn); font-size: 44rpx; line-height: 1.4; font-weight: 700; color: var(--ink); }
+.login-sub { margin-top: 8rpx; font-size: 24rpx; line-height: 1.6; color: var(--ink-3); }
+
+/* 白卡面板：辅助文字不直接落冷底（§2.5），圆角 18px 属小程序 12–18 档（§4） */
+.login-panel {
+  background: var(--paper); border: 1rpx solid var(--line);
+  border-radius: 36rpx; padding: 40rpx; box-shadow: var(--sh-1);
+}
+
+/* 字段：8px 节奏 / input 88rpx ≥44px 触控 / 六态（§4 §5） */
+.field { margin-bottom: 32rpx; }
+.field-label { display: block; font-size: 24rpx; font-weight: 600; color: var(--ink-2); margin-bottom: 16rpx; }
+.input {
+  display: block; width: 100%; box-sizing: border-box;
+  min-height: 88rpx; padding: 20rpx 28rpx;
+  background: var(--paper); color: var(--ink);
+  border: 3rpx solid var(--line); border-radius: 16rpx;
+  font-size: 28rpx; line-height: 1.5;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.ph { color: var(--muted); font-size: 28rpx; }
+.field.is-focus .input { border-color: var(--pine-3); box-shadow: 0 0 0 6rpx var(--pine-wash); }
+.field.is-error .input { border-color: var(--danger); box-shadow: 0 0 0 6rpx var(--t-danger-bg); }
+.field-error {
+  display: flex; align-items: center; gap: 12rpx;
+  margin: -8rpx 0 24rpx; font-size: 24rpx; font-weight: 600;
+  color: var(--danger); line-height: 1.5;
+}
+.err-glyph {
+  width: 32rpx; height: 32rpx; flex: none; border-radius: 50%;
+  border: 2rpx solid var(--danger); color: var(--danger);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22rpx; font-weight: 700;
+}
+
+/* 主 CTA：button 五态（§5），本屏唯一酸柠（§2.3），按压 scale .985（§5） */
+button.btn-login {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 88rpx; margin: 8rpx 0 0; padding: 0 28rpx;
+  border: none; border-radius: 24rpx;
+  background: var(--lime); color: var(--pine); box-shadow: var(--sh-lime);
+  font-size: 30rpx; font-weight: 600; line-height: 1.4;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+button.btn-login::after { border: none; }
+button.btn-login.is-pressed { background: var(--lime-deep); transform: scale(.985); }
+button.btn-login.is-disabled { opacity: .42; box-shadow: none; }
+
+/* 演示提示：白卡内、--ink-3 4.88:1（§2.4 / §2.5） */
+.login-divider { height: 1rpx; background: var(--line-2); margin: 32rpx 0 24rpx; }
+.login-hint { display: flex; align-items: center; gap: 12rpx; }
+.hint-tag {
+  font-size: 22rpx; font-weight: 600; color: var(--ink-2);
+  background: var(--paper-2); border: 1rpx solid var(--line);
+  padding: 4rpx 12rpx; border-radius: 999rpx;
+}
+.hint-txt { font-size: 24rpx; color: var(--ink-3); }
+
+/* ---------- 工作台态 ---------- */
+/* §6 教练端深绿顶栏定案 + inset 冷光收边 */
 .coach-top {
   display: flex; align-items: center; justify-content: space-between;
   background: var(--pine); color: var(--paper); padding: 36rpx 40rpx;
   box-shadow: inset 0 -1rpx 0 var(--mint-wash);
 }
 .coach-name { font-size: 34rpx; font-weight: 700; }
-.coach-sub { font-size: 24rpx; color: var(--paper); opacity: .72; }
+.coach-sub { font-size: 24rpx; opacity: .72; }
 .logout {
-  font-size: 24rpx; color: var(--paper); padding: 8rpx 20rpx;
+  display: flex; align-items: center; min-height: 64rpx;
+  font-size: 24rpx; color: var(--paper); padding: 0 20rpx;
   border: 1rpx solid var(--pine-line); border-radius: 999rpx;
 }
-
 .session-card { display: flex; align-items: center; gap: 20rpx; }
 .s-time { flex: none; width: 130rpx; }
 .s-hh { font-size: 34rpx; font-weight: 700; color: var(--pine); }
@@ -31,6 +104,7 @@
 .r-title { font-size: 34rpx; font-weight: 700; color: var(--ink); }
 .r-time { display: block; font-size: 24rpx; color: var(--ink-2); }
 .roster-count { font-size: 22rpx; color: var(--ink-3); margin-bottom: 16rpx; }
+/* §6 名单行高 64px = 128rpx，≥44px 触控 */
 .r-item {
   display: flex; align-items: center; justify-content: space-between;
   min-height: 128rpx; padding: 24rpx 0; border-bottom: 1rpx solid var(--line-2);
@@ -39,8 +113,10 @@
 .r-phone { font-size: 24rpx; color: var(--ink-3); }
 .r-actions { display: flex; gap: 16rpx; }
 .r-btn {
-  min-width: 96rpx; padding: 16rpx 24rpx; border-radius: 12rpx;
-  font-size: 26rpx; font-weight: 600; text-align: center;
+  display: flex; align-items: center; justify-content: center;
+  min-width: 112rpx; min-height: 88rpx; box-sizing: border-box; padding: 0 24rpx;
+  border-radius: 16rpx; font-size: 26rpx; font-weight: 600;
 }
 .r-btn.ok { background: var(--pine); color: var(--paper); }
 .r-btn.no { background: var(--t-clay-bg); color: var(--t-clay-ink); }
+.dialog-btn { margin-top: 16rpx; }

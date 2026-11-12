@@ -1,19 +1,57 @@
 <view class="page">
-  <!-- 教练登录 -->
-  <view wx:if="{{!loggedIn}}" class="login">
-    <view class="login-title">教练工作台</view>
-    <view class="field"><label>账号</label>
-      <input value="{{username}}" data-k="username" bindinput="onInput" />
-    </view>
-    <view class="field"><label>密码</label>
-      <input value="{{password}}" data-k="password" bindinput="onInput" password />
-    </view>
-    <view wx:if="{{loginErr}}" class="login-err">⚠ {{loginErr}}</view>
-    <view class="btn btn-primary" bindtap="login">登录</view>
-    <view class="login-hint">演示账号 coach / coach123</view>
-  </view>
+  <!-- ===== 登录态：按《UI 设计规范 v1.0（FROZEN）》深度还原 ===== -->
+  <block wx:if="{{!loggedIn}}">
+    <view class="login-stage">
+      <!-- §2.2 冷调渐变 + 两处径向柔光：仅页面级背景层，不进入组件 -->
+      <view class="login-glow"></view>
+      <view class="login-wrap">
 
-  <!-- 工作台 -->
+        <!-- §3 宋体 H2：顶栏已是「教练工作台」，此处不重复 -->
+        <view class="login-head">
+          <view class="login-h2">教练登录</view>
+          <view class="login-sub">查看今日课表 · 点名消课</view>
+        </view>
+
+        <!-- §2.5 辅助文字不得直接落冷底，全部收入白卡面板 -->
+        <view class="login-panel">
+          <view class="field {{loginErr ? 'is-error' : ''}} {{focusKey === 'username' ? 'is-focus' : ''}}">
+            <text class="field-label">账号</text>
+            <input class="input" type="text" value="{{username}}" data-k="username"
+                   bindinput="onInput" bindfocus="onFocus" bindblur="onBlur"
+                   placeholder="请输入教练账号" placeholder-class="ph"
+                   confirm-type="next" maxlength="40" />
+          </view>
+
+          <view class="field {{loginErr ? 'is-error' : ''}} {{focusKey === 'password' ? 'is-focus' : ''}}">
+            <text class="field-label">密码</text>
+            <input class="input" password="{{true}}" value="{{password}}" data-k="password"
+                   bindinput="onInput" bindfocus="onFocus" bindblur="onBlur"
+                   placeholder="请输入密码" placeholder-class="ph"
+                   confirm-type="done" maxlength="40" />
+          </view>
+
+          <!-- §5 / §7 错误三重编码：红边 + 线性图标 + 文案，不靠颜色 alone -->
+          <view wx:if="{{loginErr}}" class="field-error">
+            <text class="err-glyph">!</text><text>{{loginErr}}</text>
+          </view>
+
+          <!-- §5 主按钮五态：button + hover-class / disabled / loading；本屏唯一酸柠 -->
+          <button class="btn btn-primary btn-login {{canSubmit ? '' : 'is-disabled'}}"
+                  hover-class="is-pressed" hover-stay-time="80"
+                  disabled="{{!canSubmit || loading}}" loading="{{loading}}"
+                  bindtap="login">{{loading ? '登录中…' : (canSubmit ? '登录' : '请填写账号与密码')}}</button>
+
+          <view class="login-divider"></view>
+          <view class="login-hint">
+            <text class="hint-tag">演示</text>
+            <text class="hint-txt">coach / coach123</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- ===== 工作台态：业务逻辑不变，视觉按规范对齐 ===== -->
   <block wx:else>
     <view class="coach-top">
       <view>
@@ -40,7 +78,6 @@
       </view>
     </view>
 
-    <!-- 点名名单弹层 -->
     <view wx:if="{{roster}}" class="mask" bindtap="onMaskTap">
       <view class="dialog roster" catchtap="noop">
         <view class="roster-head">
@@ -62,8 +99,8 @@
             </block>
           </view>
         </view>
-        <view class="btn btn-secondary" style="margin-top:16rpx" catchtap="walkIn">登记临时到店（代约待办）</view>
-        <view class="btn btn-secondary" style="margin-top:16rpx" catchtap="closeRoster">关闭</view>
+        <view class="btn btn-secondary dialog-btn" catchtap="walkIn">登记临时到店（代约待办）</view>
+        <view class="btn btn-secondary dialog-btn" catchtap="closeRoster">关闭</view>
       </view>
     </view>
   </block>

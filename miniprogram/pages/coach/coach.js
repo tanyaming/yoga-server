@@ -5,6 +5,10 @@ Page({
     loggedIn: false,
     username: 'coach',
     password: 'coach123',
+    // §5 组件状态：禁用 / 加载 / 聚焦 / 错误四态由数据驱动，可真实触发
+    canSubmit: true,      // 预填演示账号；清空任一字段即触发禁用 + 占位态
+    loading: false,
+    focusKey: '',
     loginErr: '',
     today: [],
     roster: null,
@@ -19,19 +23,39 @@ Page({
   },
 
   onInput(e) {
-    this.setData({ [e.currentTarget.dataset.k]: e.detail.value });
+    const k = e.currentTarget.dataset.k;
+    const v = e.detail.value;
+    const u = k === 'username' ? v : this.data.username;
+    const p = k === 'password' ? v : this.data.password;
+    this.setData({
+      [k]: v,
+      canSubmit: !!(u && u.trim()) && !!p,
+      loginErr: '',
+    });
   },
 
+  onFocus(e) { this.setData({ focusKey: e.currentTarget.dataset.k }); },
+  onBlur() { this.setData({ focusKey: '' }); },
+
   async login() {
+    if (!this.data.canSubmit || this.data.loading) return;
+    this.setData({ loading: true, loginErr: '' });
     try {
       const r = await api.request('coach', '/api/auth/login', {
-        method: 'POST', data: { username: this.data.username, password: this.data.password },
+        method: 'POST',
+        data: { username: this.data.username.trim(), password: this.data.password },
       });
       api.setToken('coach', r.access_token);
-      this.setData({ loggedIn: true, coachName: r.user.real_name || r.user.username, loginErr: '' });
+      this.setData({
+        loggedIn: true,
+        coachName: r.user.real_name || r.user.username,
+        loginErr: '', focusKey: '',
+      });
       this.loadToday();
     } catch (e) {
-      this.setData({ loginErr: e.message });
+      this.setData({ loginErr: e.message || '登录失败，请检查账号与密码' });
+    } finally {
+      this.setData({ loading: false });
     }
   },
 
@@ -103,16 +127,10 @@ Page({
 
   logout() {
     api.setToken('coach', '');
-    this.setData({ loggedIn: false, today: [], roster: null });
+    this.setData({ loggedIn: false, today: [], roster: null, focusKey: '', loginErr: '' });
   },
 
-  onMaskTap() {
-    this.setData({ roster: null });
-  },
-
+  onMaskTap() { this.setData({ roster: null }); },
   noop() {},
-
-  closeRoster() {
-    this.setData({ roster: null });
-  },
+  closeRoster() { this.setData({ roster: null }); },
 });
