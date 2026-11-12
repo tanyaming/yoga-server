@@ -35,6 +35,17 @@ class Settings:
     BOOTSTRAP_ADMIN_USERNAME: str = field(default_factory=lambda: _env('BOOTSTRAP_ADMIN_USERNAME', 'admin'))
     BOOTSTRAP_ADMIN_PASSWORD: str = field(default_factory=lambda: _env('BOOTSTRAP_ADMIN_PASSWORD', ''))
     SEED_DEMO: bool = field(default_factory=lambda: _env('SEED_DEMO', 'true').lower() == 'true')
+    # FR-17：点名允许的课程开始前后窗口（分钟），0 表示不限制（便于历史数据 / 自动化测试）
+    ATTENDANCE_WINDOW_MINUTES: int = field(
+        default_factory=lambda: int(_env('ATTENDANCE_WINDOW_MINUTES', '30')))
+    # FR-14：候补递补后的确认锁定窗口（分钟），超时自动顺延下一位
+    WAITLIST_OFFER_MINUTES: int = field(
+        default_factory=lambda: int(_env('WAITLIST_OFFER_MINUTES', '15')))
+    # FR-21：微信订阅消息通道。模板资质未就绪前默认关闭，开启必须显式配置模板 ID。
+    WX_SUBSCRIBE_ENABLED: bool = field(
+        default_factory=lambda: _env('WX_SUBSCRIBE_ENABLED', 'false').lower() == 'true')
+    WX_SUBSCRIBE_TEMPLATE_ID: str = field(
+        default_factory=lambda: _env('WX_SUBSCRIBE_TEMPLATE_ID', ''))
 
     @property
     def CORS_ORIGINS(self) -> List[str]:
@@ -53,6 +64,12 @@ class Settings:
             errors.append('DATABASE_URL 未配置')
         if not self.JWT_SECRET or len(self.JWT_SECRET) < 16:
             errors.append('JWT_SECRET 缺失或过短（>=16 字符）')
+        if self.ATTENDANCE_WINDOW_MINUTES < 0:
+            errors.append('ATTENDANCE_WINDOW_MINUTES 不能为负')
+        if self.WAITLIST_OFFER_MINUTES < 1:
+            errors.append('WAITLIST_OFFER_MINUTES 必须 >= 1')
+        if self.WX_SUBSCRIBE_ENABLED and not self.WX_SUBSCRIBE_TEMPLATE_ID:
+            errors.append('开启 WX_SUBSCRIBE_ENABLED 必须同时配置 WX_SUBSCRIBE_TEMPLATE_ID')
         if self.is_prod:
             if 'change-me' in self.JWT_SECRET:
                 errors.append('生产环境禁止使用示例 JWT_SECRET')
@@ -66,6 +83,8 @@ class Settings:
                 errors.append('生产环境禁止使用 SQLite，请切换 MySQL')
             if 'change-me' in self.BOOTSTRAP_ADMIN_PASSWORD:
                 errors.append('生产环境必须替换 BOOTSTRAP_ADMIN_PASSWORD')
+            if self.WX_SUBSCRIBE_ENABLED and not self.WX_APPID:
+                errors.append('开启订阅消息通道必须配置 WX_APPID')
         if self.APP_PORT < 1 or self.APP_PORT > 65535:
             errors.append('APP_PORT 非法')
         if errors:

@@ -1,4 +1,8 @@
-"""站内消息 / 订阅消息记录。"""
+"""站内消息 / 订阅消息记录。
+
+FR-21：统一通知通道的落库记录。``channel_status`` 明确标注微信订阅消息通道
+是已送达 / 未配置资质跳过 / 发送失败，绝不把「站内信已写」伪装成「双通道已送达」。
+"""
 from __future__ import annotations
 
 from sqlalchemy import Boolean, Index, String, Text
@@ -17,3 +21,6 @@ class InAppMessage(Base, TenantMixin, TimestampMixin):
     mtype: Mapped[str] = mapped_column(String(20), default='SYSTEM', nullable=False)  # SYSTEM/BOOKING/ENTITLEMENT
     ref_id: Mapped[str] = mapped_column(String(36), default='')
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    scene: Mapped[str] = mapped_column(String(40), default='', nullable=False)
+    channel_status: Mapped[str] = mapped_column(String(30), default='IN_APP_ONLY', nullable=False)
+    channel_detail: Mapped[str] = mapped_column(String(240), default='', nullable=False)

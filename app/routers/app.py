@@ -1,14 +1,16 @@
-"""会员端小程序接口：课程表 / 约课 / 我的权益 / 流水。"""
+"""会员端小程序接口：课程表 / 约课 / 我的权益 / 流水 / 递补确认 / 评价 / 站内信。"""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..dependencies import get_current_member
-from ..models import Member
+from ..models import InAppMessage, Member
 from ..services import payment as pay_svc
+from ..services import review as review_svc
 from ..services import schedule as sch_svc
 from ..utils.timeutil import business_date, parse_dt
 
@@ -21,6 +23,12 @@ class BookBody(BaseModel):
 
 class CancelBody(BaseModel):
     enrollment_id: str = Field(min_length=1)
+
+
+class ReviewBody(BaseModel):
+    session_id: str = Field(min_length=1)
+    rating: int = 5
+    content: str = ''
 
 
 @router.get('/me')
@@ -63,6 +71,15 @@ def cancel(body: CancelBody, member: Member = Depends(get_current_member),
     return result
 
 
+@router.post('/offers/{enrollment_id}/confirm')
+def confirm_offer(enrollment_id: str, member: Member = Depends(get_current_member),
+                  db: Session = Depends(get_db)):
+    """FR-14：会员在锁定窗口内确认候补递补名额，OFFERED → BOOKED。"""
+    result = sch_svc.confirm_offer(db, member.tenant_id, member.id, enrollment_id)
+    db.commit()
+    return result
+
+
 @router.get('/bookings')
 def bookings(member: Member = Depends(get_current_member), db: Session = Depends(get_db)):
     return sch_svc.my_bookings(db, member.tenant_id, member.id)
@@ -76,3 +93,32 @@ def entitlements(member: Member = Depends(get_current_member), db: Session = Dep
 @router.get('/ledger')
 def ledger(member: Member = Depends(get_current_member), db: Session = Depends(get_db)):
     return pay_svc.member_ledger(db, member.tenant_id, member.id)
+
+
+@router.post('/reviews')
+def submit_review(body: ReviewBody, member: Member = Depends(get_current_member),
+                  db: Session = Depends(get_db)):
+    """FR-20：评价已到课的教练，先审后显，含个人信息直接拦截。"""
+    r = review_svc.submit_review(db, member.tenant_id, member.id, body.model_dump())
+    db.commit()
+    return {'id': r.id, 'status': r.status, 'rating': r.rating}
+
+
+@router.get('/reviews')
+def list_reviews(coach_id: str = '', member: Member = Depends(get_current_member),
+                 db: Session = Depends(get_db)):
+    """FR-20：会员端仅可见审核通过的评价，姓名脱敏。"""
+    return review_svc.list_public(db, member.tenant_id, coach_id)
+
+
+@router.get('/messages')
+def messages(member: Member = Depends(get_current_member), db: Session = Depends(get_db)):
+    """FR-21：站内信列表，含通道状态留痕，便于核对通知是否真实送达。"""
+    rows = db.scalars(select(InAppMessage).where(
+        InAppMessage.tenant_id == member.tenant_id,
+        InAppMessage.member_id == member.id)
+        .order_by(InAppMessage.created_at.desc()).limit(50)).all()
+    return [{'id': m.id, 'title': m.title, 'content': m.content,
+             'scene': m.scene, 'mtype': m.mtype, 'is_read': m.is_read,
+             'channel_status': m.channel_status,
+             'created_at': m.created_at.strftime('%Y-%m-%d %H:%M')} for m in rows]

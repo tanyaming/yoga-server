@@ -21,6 +21,8 @@ class ProductBody(BaseModel):
     price_cents: int = 0
     valid_days: int = 365
     cross_store: bool = False
+    applicable_store_ids: str = ''   # 逗号分隔，空=不限门店
+    allowed_ctypes: str = ''         # GROUP/PRIVATE，空=不限
     description: str = ''
 
 
@@ -47,7 +49,8 @@ def list_products(auth: AuthUser = Depends(mgr), db: Session = Depends(get_db)):
     return [{'id': p.id, 'code': p.code, 'name': p.name, 'ptype': p.ptype,
              'total_sessions': p.total_sessions, 'price_cents': p.price_cents,
              'valid_days': p.valid_days, 'cross_store': p.cross_store,
-             'description': p.description}
+             'applicable_store_ids': p.applicable_store_ids,
+             'allowed_ctypes': p.allowed_ctypes, 'description': p.description}
             for p in svc.list_products(db, auth.tenant_id)]
 
 

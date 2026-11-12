@@ -1,16 +1,12 @@
-"""教练端接口：今日课表 / 点名 / 会员跟进。"""
+"""教练端接口：今日课表 / 点名 / 会员跟进 / 临时到店代约待办。"""
 from __future__ import annotations
-
-from typing import List
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..dependencies import AuthUser, require_min_role
-from ..models import FollowUp, Member
 from ..services import attendance as att_svc
 from ..services import member as mem_svc
 from ..services import schedule as sch_svc
@@ -31,6 +27,12 @@ class FollowUpBody(BaseModel):
     member_id: str = Field(min_length=1)
     content: str = Field(min_length=1)
     visible_to_member: bool = False
+
+
+class WalkInBody(BaseModel):
+    session_id: str = Field(min_length=1)
+    member_id: str = Field(min_length=1)
+    note: str = ''
 
 
 @router.get('/today')
@@ -55,14 +57,25 @@ def mark(body: MarkBody, auth: AuthUser = Depends(coach), db: Session = Depends(
     return result
 
 
+@router.post('/walk-in')
+def walk_in(body: WalkInBody, auth: AuthUser = Depends(coach), db: Session = Depends(get_db)):
+    """FR-17：临时到店会员登记代约待办，提示店长补录权益，不绕过权益直接消课。"""
+    result = att_svc.add_walk_in(db, auth.tenant_id, _op(auth), body.session_id,
+                                 body.member_id, body.note)
+    db.commit()
+    return result
+
+
 @router.get('/members')
 def members(keyword: str = '', auth: AuthUser = Depends(coach), db: Session = Depends(get_db)):
+    from ..models import Member
     return [{'id': m.id, 'name': m.name, 'phone_mask': m.phone_mask}
             for m in mem_svc.list_members(db, auth.tenant_id, keyword)]
 
 
 @router.get('/follow-ups/{member_id}')
 def follow_ups(member_id: str, auth: AuthUser = Depends(coach), db: Session = Depends(get_db)):
+    from ..models import FollowUp
     return [{'id': f.id, 'content': f.content, 'visible_to_member': f.visible_to_member,
              'created_at': f.created_at.strftime('%Y-%m-%d %H:%M')}
             for f in mem_svc.list_follow_ups(db, auth.tenant_id, member_id)]

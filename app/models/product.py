@@ -17,7 +17,13 @@ LEDGER_KINDS = ('PURCHASE', 'CONSUME', 'REFUND', 'ADJUST', 'EXPIRE')
 
 
 class Product(Base, TenantMixin, TimestampMixin):
-    """商品定义：课程包 / 私教 / 储值卡，价格与课时口径。"""
+    """商品定义：课程包 / 私教 / 储值卡，价格与课时口径。
+
+    FR-07 / FR-16 适用规则：
+    - ``applicable_store_ids``：适用门店 ID，逗号分隔，空串=不限门店；
+    - ``cross_store``：True 表示租户内跨店通用，此时忽略 applicable_store_ids；
+    - ``allowed_ctypes``：可约课型（GROUP/PRIVATE），逗号分隔，空串=不限。
+    """
     __tablename__ = 'products'
     __table_args__ = (UniqueConstraint('tenant_id', 'code', name='uq_product_code'),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
@@ -28,12 +34,18 @@ class Product(Base, TenantMixin, TimestampMixin):
     price_cents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     valid_days: Mapped[int] = mapped_column(Integer, default=365, nullable=False)
     cross_store: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    applicable_store_ids: Mapped[str] = mapped_column(String(240), default='', nullable=False)
+    allowed_ctypes: Mapped[str] = mapped_column(String(80), default='', nullable=False)
     status: Mapped[str] = mapped_column(String(20), default='ACTIVE', nullable=False)
     description: Mapped[str] = mapped_column(Text, default='')
 
 
 class Entitlement(Base, TenantMixin, TimestampMixin):
-    """权益实例：某会员持有的一笔可消耗额度（课时或余额）。"""
+    """权益实例：某会员持有的一笔可消耗额度（课时或余额）。
+
+    FR-16：适用规则在收款时从商品**快照**下来，商品后续配置变更不影响已售权益。
+    空串 / False 表示不限制，保证历史数据与旧客户端兼容。
+    """
     __tablename__ = 'entitlements'
     __table_args__ = (Index('ix_ent_member_status', 'member_id', 'status'),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
@@ -48,6 +60,9 @@ class Entitlement(Base, TenantMixin, TimestampMixin):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default='ACTIVE', nullable=False)
     source_payment_id: Mapped[str] = mapped_column(String(36), default='')
+    cross_store: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    applicable_store_ids: Mapped[str] = mapped_column(String(240), default='', nullable=False)
+    allowed_ctypes: Mapped[str] = mapped_column(String(80), default='', nullable=False)
 
 
 class LedgerEntry(Base, TenantMixin, TimestampMixin):

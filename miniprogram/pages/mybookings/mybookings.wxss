@@ -1,4 +1,4 @@
-/* 我的课：待上课 / 历史分段 + 状态标签与取消入口 */
+/* 我的课：待上课 / 历史分段 + 状态标签与确认/评价/取消入口 */
 .app-header { padding: 24rpx 40rpx 8rpx; }
 .hero-date { font-size: 22rpx; color: var(--ink-3); }
 .hero-title { font-family: var(--f-cn); font-size: 48rpx; font-weight: 700; color: var(--ink); margin-top: 8rpx; }
@@ -16,5 +16,10 @@
   font-size: 22rpx; color: var(--t-danger-ink); background: var(--t-danger-bg);
   padding: 8rpx 16rpx; border-radius: 999rpx;
 }
+.b-action {
+  font-size: 22rpx; color: var(--t-pine-ink); background: var(--t-pine-bg);
+  padding: 8rpx 16rpx; border-radius: 999rpx;
+}
+.b-action.primary { color: var(--t-lime-ink); background: var(--t-lime-bg); }
 .empty-card { text-align: center; padding: 60rpx 40rpx; }
 .empty-t { font-size: 26rpx; color: var(--ink-3); margin-bottom: 24rpx; }

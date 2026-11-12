@@ -73,6 +73,34 @@ Page({
     }
   },
 
+  // FR-17：临时到店会员登记代约待办，提示店长补录权益，不绕过权益直接点名
+  async walkIn() {
+    const sessionId = this.data.roster && this.data.roster.session_id;
+    if (!sessionId) return;
+    try {
+      const members = await api.request('coach', '/api/coach/members');
+      if (!members || members.length === 0) {
+        wx.showToast({ title: '暂无可选会员', icon: 'none' });
+        return;
+      }
+      const list = members.slice(0, 6);
+      const pick = await new Promise((resolve, reject) => {
+        wx.showActionSheet({
+          itemList: list.map((m) => m.name + ' ' + m.phone_mask),
+          success: (r) => resolve(list[r.tapIndex]), fail: reject,
+        });
+      });
+      const r = await api.request('coach', '/api/coach/walk-in', {
+        method: 'POST', data: { session_id: sessionId, member_id: pick.id, note: '' },
+      });
+      wx.showToast({ title: r.message || '已登记代约待办', icon: 'none' });
+    } catch (e) {
+      const msg = (e && (e.errMsg || e.message)) || '';
+      if (msg.indexOf('cancel') >= 0) return;
+      wx.showToast({ title: (e && e.message) || '登记失败', icon: 'none' });
+    }
+  },
+
   logout() {
     api.setToken('coach', '');
     this.setData({ loggedIn: false, today: [], roster: null });

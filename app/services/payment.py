@@ -45,10 +45,17 @@ def create_product(db: Session, tenant_id: str, operator: Dict, data: dict) -> P
         total_sessions = 0
     if price_cents < 0:
         raise ValidationError('价格不能为负')
+    applicable = [x.strip() for x in str(data.get('applicable_store_ids') or '').split(',') if x.strip()]
+    ctypes = [x.strip().upper() for x in str(data.get('allowed_ctypes') or '').split(',') if x.strip()]
+    for c in ctypes:
+        if c not in ('GROUP', 'PRIVATE'):
+            raise ValidationError('可约课型非法：%s' % c)
     p = Product(id=random_id(), tenant_id=tenant_id, code=code, name=name, ptype=ptype,
                 total_sessions=total_sessions, price_cents=price_cents,
                 valid_days=int(data.get('valid_days', 365) or 365),
                 cross_store=bool(data.get('cross_store', False)),
+                applicable_store_ids=','.join(applicable),
+                allowed_ctypes=','.join(ctypes),
                 description=data.get('description', ''))
     db.add(p)
     write_audit(db, tenant_id, operator['id'], operator['name'], 'CREATE', 'product', p.id,
@@ -118,6 +125,10 @@ def register_payment(db: Session, tenant_id: str, operator: Dict, data: dict) ->
         balance_cents=amount_cents if product.ptype == 'STORED' else 0,
         expires_at=now_naive() + timedelta(days=product.valid_days),
         source_payment_id=pay.id,
+        # FR-16：商品适用规则在收款时快照到权益实例，商品后续改配置不影响已售权益
+        cross_store=product.cross_store,
+        applicable_store_ids=product.applicable_store_ids,
+        allowed_ctypes=product.allowed_ctypes,
     )
     db.add(ent)
     pay.entitlement_id = ent.id

@@ -9,20 +9,23 @@ function parseLocal(s) {
 
 // 底部 CTA 五态（含边界态），酸柠只出现在「确认约课 / 加入候补」这一处主 CTA
 const CTA = {
-  OPEN:       { text: '确认约课',   cls: 'btn-primary',   disabled: false },
-  FULL:       { text: '加入候补',   cls: 'btn-primary',   disabled: false },
-  NO_BALANCE: { text: '去续卡 →',   cls: 'btn-secondary', disabled: false },
-  BOOKED:     { text: '取消预约',   cls: 'btn-secondary', disabled: false },
-  WAITLIST:   { text: '取消候补',   cls: 'btn-secondary', disabled: false },
-  CLOSED:     { text: '已截止预约', cls: 'btn-disabled',  disabled: true },
-  FINISHED:   { text: '课程已结束', cls: 'btn-disabled',  disabled: true },
-  CANCELLED:  { text: '课程已取消', cls: 'btn-disabled',  disabled: true },
-  NOT_FOUND:  { text: '返回课程表', cls: 'btn-secondary', disabled: false },
+  OPEN:           { text: '确认约课',     cls: 'btn-primary',   disabled: false },
+  FULL:           { text: '加入候补',     cls: 'btn-primary',   disabled: false },
+  NO_BALANCE:     { text: '去续卡 →',     cls: 'btn-secondary', disabled: false },
+  BOOKED:         { text: '取消预约',     cls: 'btn-secondary', disabled: false },
+  WAITLIST:       { text: '取消候补',     cls: 'btn-secondary', disabled: false },
+  OFFERED:        { text: '确认递补',     cls: 'btn-primary',   disabled: false },
+  NOT_APPLICABLE: { text: '权益不适用',   cls: 'btn-disabled',  disabled: true },
+  CLOSED:         { text: '已截止预约',   cls: 'btn-disabled',  disabled: true },
+  FINISHED:       { text: '课程已结束',   cls: 'btn-disabled',  disabled: true },
+  CANCELLED:      { text: '课程已取消',   cls: 'btn-disabled',  disabled: true },
+  NOT_FOUND:      { text: '返回课程表',   cls: 'btn-secondary', disabled: false },
 };
 const STATE_TEXT = {
   OPEN: '可直接预约', FULL: '已满员 · 可候补', NO_BALANCE: '课时不足',
-  BOOKED: '已预约', WAITLIST: '候补中', CLOSED: '已截止',
-  FINISHED: '已结束', CANCELLED: '已取消', NOT_FOUND: '课程不存在',
+  BOOKED: '已预约', WAITLIST: '候补中', OFFERED: '递补待确认',
+  CLOSED: '已截止', FINISHED: '已结束', CANCELLED: '已取消',
+  NOT_APPLICABLE: '权益不适用', NOT_FOUND: '课程不存在',
 };
 const WARN = {
   NO_BALANCE: '课时不足，请先到前台续卡后再约课（本系统无线上支付）',
@@ -30,6 +33,7 @@ const WARN = {
   FINISHED: '课程已开始，无法预约',
   CANCELLED: '该课程已由门店取消',
   FULL: '本节已满，加入候补后有空位将按顺序自动递补',
+  OFFERED: '有空位已为你锁定，请在规定时间内确认，逾期将顺延下一位候补',
 };
 
 Page({
@@ -97,10 +101,16 @@ Page({
     if (s.status === 'CANCELLED') state = 'CANCELLED';
     else if (my === 'BOOKED') state = 'BOOKED';
     else if (my === 'WAITLIST') state = 'WAITLIST';
+    else if (my === 'OFFERED') state = 'OFFERED';
     else if (start && start <= now) state = 'FINISHED';
     else if (now >= deadline) state = 'CLOSED';
     else if (remain <= 0) state = 'NO_BALANCE';
+    else if (s.applicable === false) state = 'NOT_APPLICABLE';
     else if (full) state = 'FULL';
+    // FR-13/FR-16：卡种 / 课型 / 适用门店不匹配时，直接展示服务端给的原因
+    const warn = state === 'NOT_APPLICABLE'
+      ? (s.not_applicable_reason || '当前权益不适用于该课程或门店，请到前台咨询')
+      : (WARN[state] || '');
     this.setData({
       session: s, ents, remain,
       cost: s.cost_sessions || 1,
@@ -108,7 +118,7 @@ Page({
       state,
       stateText: STATE_TEXT[state],
       cta: CTA[state],
-      warn: WARN[state] || '',
+      warn,
       result: keepResult ? this.data.result : '',
       loading: false,
     });
@@ -119,6 +129,7 @@ Page({
     if (cta.disabled || submitting) return;
     if (state === 'NOT_FOUND') return this.goBack();
     if (state === 'BOOKED' || state === 'WAITLIST') return this.confirmCancel();
+    if (state === 'OFFERED') return this.confirmOffer();
     if (state === 'NO_BALANCE') {
       wx.showToast({ title: '请到前台续卡，本系统无线上支付', icon: 'none' });
       return;
@@ -143,11 +154,33 @@ Page({
     }
   },
 
+  // FR-14：候补递补锁定窗口内在课程详情页也可直接确认
+  async confirmOffer() {
+    try {
+      const bookings = await api.request('member', '/api/app/bookings');
+      const enr = (bookings || []).find((x) =>
+        x.session_id === this.data.sessionId && x.status === 'OFFERED');
+      if (!enr) {
+        wx.showToast({ title: '无待确认的递补名额', icon: 'none' });
+        await this.loadDetail(false);
+        return;
+      }
+      await api.request('member', '/api/app/offers/' + enr.id + '/confirm', {
+        method: 'POST', data: {},
+      });
+      wx.showToast({ title: '递补已确认', icon: 'success' });
+    } catch (e) {
+      wx.showToast({ title: e.message, icon: 'none' });
+    }
+    await this.loadDetail(false);
+  },
+
   async confirmCancel() {
     try {
       const bookings = await api.request('member', '/api/app/bookings');
       const enr = (bookings || []).find((x) =>
-        x.session_id === this.data.sessionId && (x.status === 'BOOKED' || x.status === 'WAITLIST'));
+        x.session_id === this.data.sessionId &&
+        (x.status === 'BOOKED' || x.status === 'WAITLIST' || x.status === 'OFFERED'));
       if (!enr) { wx.showToast({ title: '无待取消预约', icon: 'none' }); return; }
       await api.request('member', '/api/app/cancel', {
         method: 'POST', data: { enrollment_id: enr.id },

@@ -26,10 +26,14 @@
         </view>
         <view class="b-body">
           <view class="b-name">{{item.course_name}}</view>
-          <view class="b-meta">{{item.store_id || '门店'}} · {{item.statusText}}</view>
+          <view class="b-meta">
+            {{item.store_id || '门店'}} · {{item.statusText}}<text wx:if="{{item.offerHint}}"> · {{item.offerHint}}</text>
+          </view>
         </view>
         <view class="b-right">
           <text class="tag {{item.tagCls}}">{{item.statusText}}</text>
+          <view wx:if="{{item.canConfirm}}" class="b-action primary" catchtap="confirmOffer" data-id="{{item.id}}">确认递补</view>
+          <view wx:if="{{item.canReview}}" class="b-action" catchtap="review" data-sid="{{item.session_id}}">评价教练</view>
           <view wx:if="{{item.canCancel}}" class="b-cancel" catchtap="cancel" data-id="{{item.id}}">取消</view>
         </view>
       </view>

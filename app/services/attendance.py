@@ -2,17 +2,22 @@
 
 扣课策略（MVP）：优先扣课时型权益（PACKAGE/PRIVATE），按到期时间 FIFO 扣 1 节；
 课时耗尽则报课时不足。储值卡仅记账，本期不支持抵扣消课。
+
+FR-17：点名限定在课程时段 ±N 分钟（可配置 ATTENDANCE_WINDOW_MINUTES，0=不限）；
+教练代临时到店会员登记「代约待办」并提示店长补录权益，不绕过权益直接扣课。
 """
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..errors import BusinessRuleError, InsufficientEntitlement, NotFound
+from ..config import settings
+from ..errors import BusinessRuleError, Conflict, InsufficientEntitlement, NotFound, ValidationError
 from ..models import (AttendanceRecord, ClassSession, Enrollment, Entitlement,
-                      LedgerEntry)
+                      FollowUp, LedgerEntry, Member)
 from ..repositories.base import write_audit
 from ..security import random_id
 from ..utils.timeutil import now_naive
@@ -25,14 +30,22 @@ def _get_session(db: Session, tenant_id: str, session_id: str) -> ClassSession:
     return s
 
 
+def within_attendance_window(s: ClassSession, now=None, minutes: Optional[int] = None) -> bool:
+    """FR-17 纯函数：是否在允许点名的时间窗内。可独立传 minutes 做边界验证。"""
+    m = settings.ATTENDANCE_WINDOW_MINUTES if minutes is None else minutes
+    if m <= 0:
+        return True
+    cur = now or now_naive()
+    return (s.starts_at - timedelta(minutes=m)) <= cur <= (s.ends_at + timedelta(minutes=m))
+
+
 def get_roster(db: Session, tenant_id: str, session_id: str) -> Dict:
     """点名名单：已约 + 已到课 + 爽约的会员，含点名状态。"""
     s = _get_session(db, tenant_id, session_id)
     enrs = db.scalars(select(Enrollment).where(
         Enrollment.session_id == session_id,
-        Enrollment.status.in_(('BOOKED', 'ATTENDED', 'NO_SHOW')))
+        Enrollment.status.in_(('BOOKED', 'OFFERED', 'ATTENDED', 'NO_SHOW')))
         .order_by(Enrollment.created_at.asc())).all()
-    from ..models import Member
     items = []
     for e in enrs:
         m = db.get(Member, e.member_id)
@@ -49,6 +62,8 @@ def get_roster(db: Session, tenant_id: str, session_id: str) -> Dict:
         'session_id': s.id, 'course_name': s.course_name,
         'starts_at': s.starts_at.strftime('%Y-%m-%d %H:%M'),
         'capacity': s.capacity, 'booked': s.booked, 'items': items,
+        'within_window': within_attendance_window(s),
+        'window_minutes': settings.ATTENDANCE_WINDOW_MINUTES,
     }
 
 
@@ -58,12 +73,17 @@ def mark_attendance(db: Session, tenant_id: str, operator: Dict, session_id: str
         raise BusinessRuleError('点名状态非法')
     s = _get_session(db, tenant_id, session_id)
 
-    # 幂等：已点名直接返回，不重复扣课
+    # 幂等优先：已点名直接返回，不重复扣课，也不受时间窗影响
     existing = db.scalar(select(AttendanceRecord).where(
         AttendanceRecord.session_id == session_id,
         AttendanceRecord.member_id == member_id))
     if existing:
         return {'id': existing.id, 'already': True, 'status': existing.status}
+
+    # FR-17：点名时间窗（服务端最终校验）
+    if not within_attendance_window(s):
+        m = settings.ATTENDANCE_WINDOW_MINUTES
+        raise BusinessRuleError('不在点名时间窗内（开课前 %d 分钟至结束后 %d 分钟）' % (m, m))
 
     enr = db.scalar(select(Enrollment).where(
         Enrollment.session_id == session_id, Enrollment.member_id == member_id,
@@ -88,6 +108,33 @@ def mark_attendance(db: Session, tenant_id: str, operator: Dict, session_id: str
     write_audit(db, tenant_id, operator['id'], operator['name'], 'ATTEND', 'attendance', att.id,
                 {'session_id': session_id, 'member_id': member_id, 'status': status})
     return {'id': att.id, 'already': False, 'status': status}
+
+
+def add_walk_in(db: Session, tenant_id: str, operator: Dict, session_id: str,
+                member_id: str, note: str = '') -> Dict:
+    """FR-17 教练代约：登记跟进待办并提示店长补录权益，不直接扣课、不占名额。"""
+    s = _get_session(db, tenant_id, session_id)
+    if s.status == 'CANCELLED':
+        raise BusinessRuleError('该课程已取消')
+    m = db.get(Member, member_id)
+    if not m or m.tenant_id != tenant_id:
+        raise NotFound('会员不存在')
+    exists = db.scalar(select(Enrollment).where(
+        Enrollment.tenant_id == tenant_id, Enrollment.session_id == session_id,
+        Enrollment.member_id == member_id,
+        Enrollment.status.in_(('BOOKED', 'WAITLIST', 'OFFERED', 'ATTENDED', 'NO_SHOW'))))
+    if exists:
+        raise Conflict('该会员已有预约或点名记录，请直接点名')
+    content = ('[代约待办] %s %s：会员 %s 临时到店，请店长补录权益后再点名消课。%s'
+               % (s.course_name, s.starts_at.strftime('%m-%d %H:%M'), m.name, note[:100]))
+    f = FollowUp(id=random_id(), tenant_id=tenant_id, member_id=member_id,
+                 coach_id=operator['id'], content=content,
+                 visible_to_member=False, created_by=operator['id'])
+    db.add(f)
+    write_audit(db, tenant_id, operator['id'], operator['name'], 'WALK_IN', 'follow_up', f.id,
+                {'session_id': session_id, 'member_id': member_id})
+    return {'id': f.id, 'can_mark': False,
+            'message': '已登记代约待办，请店长补录权益后再点名消课'}
 
 
 def _consume_session(db: Session, tenant_id: str, member_id: str,

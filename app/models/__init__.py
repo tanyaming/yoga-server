@@ -9,6 +9,8 @@ from .payment import PaymentRecord, RefundRecord
 from .reconcile import DailyLedger, ReconciliationDiff
 from .audit import AuditLog
 from .notification import InAppMessage
+from .change_request import ScheduleChangeRequest
+from .review import CoachReview
 
 __all__ = [
     'Base', 'Tenant', 'Store', 'User', 'RefreshToken',
@@ -17,4 +19,5 @@ __all__ = [
     'CourseTemplate', 'ClassSession', 'Enrollment',
     'AttendanceRecord', 'PaymentRecord', 'RefundRecord',
     'DailyLedger', 'ReconciliationDiff', 'AuditLog', 'InAppMessage',
+    'ScheduleChangeRequest', 'CoachReview',
 ]

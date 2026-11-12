@@ -93,7 +93,8 @@ def ready():
 
 # ---------- 路由注册 ----------
 from .routers import app as app_router          # noqa: E402
-from .routers import attendance, auth, coach, dashboard, member, payment, schedule, tenant
+from .routers import (attendance, auth, change_request, coach, dashboard, member,
+                      payment, review, schedule, tenant)
 
 app.include_router(auth.router)
 app.include_router(tenant.router)
@@ -103,6 +104,8 @@ app.include_router(schedule.router)
 app.include_router(attendance.router)
 app.include_router(dashboard.router)
 app.include_router(coach.router)
+app.include_router(change_request.router)
+app.include_router(review.router)
 app.include_router(app_router.router)
 
 # 管理后台静态站点（同源部署，免 CORS）

@@ -62,7 +62,8 @@
             </block>
           </view>
         </view>
-        <view class="btn btn-secondary" style="margin-top:24rpx" catchtap="closeRoster">关闭</view>
+        <view class="btn btn-secondary" style="margin-top:16rpx" catchtap="walkIn">登记临时到店（代约待办）</view>
+        <view class="btn btn-secondary" style="margin-top:16rpx" catchtap="closeRoster">关闭</view>
       </view>
     </view>
   </block>
