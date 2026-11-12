@@ -40,12 +40,6 @@
                   hover-class="is-pressed" hover-stay-time="80"
                   disabled="{{!canSubmit || loading}}" loading="{{loading}}"
                   bindtap="login">{{loading ? '登录中…' : (canSubmit ? '登录' : '请填写账号与密码')}}</button>
-
-          <view class="login-divider"></view>
-          <view class="login-hint">
-            <text class="hint-tag">演示</text>
-            <text class="hint-txt">coach / coach123</text>
-          </view>
         </view>
       </view>
     </view>

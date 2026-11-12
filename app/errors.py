@@ -76,12 +76,17 @@ class BookingClosed(BusinessRuleError):
 class DuplicateBooking(Conflict):
     code, message = 'DUPLICATE_BOOKING', '同一时段已有预约'
 
+
+class RateLimited(AppError):
+    code, http_status, message = 'RATE_LIMITED', 429, '请求过于频繁，请稍后再试'
+
+
 ERROR_REGISTRY = {
     cls.code: cls.http_status
     for cls in (
         AppError, ValidationError, Unauthorized, Forbidden, TenantViolation,
         NotFound, Conflict, IdempotencyConflict, BusinessRuleError,
         InsufficientEntitlement, ClassFull, EntitlementNotApplicable,
-        BookingClosed, DuplicateBooking,
+        BookingClosed, DuplicateBooking, RateLimited,
     )
 }

@@ -71,7 +71,7 @@ class Factory:
 
     def member(self, tenant_id: str, name: str = '') -> str:
         member_id = random_id()
-        phone = '139' + uuid.uuid4().hex[:8]
+        phone = '139%08d' % (uuid.uuid4().int % 100000000)
         with SessionLocal() as db:
             db.add(Member(id=member_id, tenant_id=tenant_id, phone_hash=phone_hash(phone),
                           phone_mask=mask_phone(phone), name=name or ('会员' + member_id[:6])))
@@ -190,7 +190,7 @@ def member_token(client, world):
     """会员端令牌：走 wx-bind 真实链路（WX_MOCK=true），返回 (member_id, headers)。"""
     def _mk(tenant_id: str = TENANT_A, name: str = '会员端测试') -> tuple:
         code = 'code-' + uuid.uuid4().hex[:12]
-        phone = '138' + uuid.uuid4().hex[:8]
+        phone = '138%08d' % (uuid.uuid4().int % 100000000)
         resp = client.post('/api/auth/wx-bind', json={
             'code': code, 'tenant_id': tenant_id, 'phone': phone, 'name': name})
         assert resp.status_code == 200, resp.text

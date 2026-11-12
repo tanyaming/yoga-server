@@ -204,6 +204,7 @@ async function route() {
   const content = $('#content');
   // 直接改 hash 进入无权限页面：渲染空态，一个请求都不发
   if (!canView(page)) {
+    $('#topbar-title').textContent = '无权访问';
     content.innerHTML = '<div class="empty">无权访问<br>当前角色（' + esc(roleLabel(currentUser.role)) +
       '）没有查看该页面的权限</div>';
     return;
@@ -313,7 +314,7 @@ async function renderMembers(el) {
     $('#m-tbody').innerHTML = rows.length ? rows.map((m) => `<tr>
       <td><a href="javascript:void 0" class="member-link" data-id="${m.id}">${esc(m.name)}</a></td>
       <td>${esc(m.phone_mask)}</td><td>${m.source_store_id || '—'}</td>
-      <td>${statusTag('enroll', m.status === 'ACTIVE' ? 'BOOKED' : 'CANCELLED')}</td>
+      <td>${statusTag('status', m.status)}</td>
       <td>${esc(m.created_at)}</td>
       <td class="actions"><button class="btn btn-secondary btn-sm member-link" data-id="${m.id}">详情</button></td></tr>`).join('')
       : '<tr><td colspan="6" class="empty">暂无会员</td></tr>';
@@ -338,8 +339,16 @@ function openMemberForm(load) {
     <div class="form-actions"><button class="btn btn-secondary" onclick="this.closest('.modal-mask').remove()">取消</button>
     <button class="btn btn-primary" id="f-submit">保存</button></div>`);
   mask.querySelector('#f-submit').addEventListener('click', async () => {
+    // 前端前置校验（BUG-014）：先拦明显错误，减少无效服务端往返并定位到具体字段
+    const name = $('#f-name').value.trim();
+    const phone = $('#f-phone').value.trim();
+    if (!name) { showToast('请填写姓名', true); $('#f-name').focus(); return; }
+    if (name.length > 60) { showToast('姓名过长（最多 60 字符）', true); $('#f-name').focus(); return; }
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      showToast('请填写正确的 11 位手机号', true); $('#f-phone').focus(); return;
+    }
     try {
-      await API.request('/api/members', { method: 'POST', body: { name: $('#f-name').value.trim(), phone: $('#f-phone').value.trim(), note: $('#f-note').value.trim() } });
+      await API.request('/api/members', { method: 'POST', body: { name, phone, note: $('#f-note').value.trim() } });
       mask.remove(); showToast('会员已创建'); load('');
     } catch (err) { showToast(err.message, true); }
   });

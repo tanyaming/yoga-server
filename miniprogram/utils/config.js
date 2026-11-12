@@ -13,20 +13,26 @@
  *       必须 HTTPS + 已备案域名，且已在微信公众平台配置为 request 合法域名；
  *       不支持 IP、不支持端口号、不支持自签证书（以微信官方最新规则为准）。
  */
-const ENV = 'devtool';
+const ENV = 'local';
 
-// ↓↓↓ 真机联调时替换成你的 HTTPS 域名（不带端口、不带路径、不带结尾斜杠）
+// ↓↓↓ 真机联调 / 正式发布前：把 REAL_URL 换成你的 HTTPS 域名（不带端口、不带路径、不带结尾斜杠）
 // 例：'https://api.suxu.com'
 const REAL_URL = 'https://YOUR_HTTPS_DOMAIN';
 
 const URLS = {
-  devtool: 'http://124.220.52.50',  // 已部署后端：nginx 80 → uvicorn 8002
-  local: 'http://127.0.0.1:8002',   // 本机自起后端
+  devtool: 'http://127.0.0.1:8002',  // 开发者工具模拟器：连本机后端
+  local: 'http://127.0.0.1:8002',    // 本机自起后端
   real: REAL_URL,
 };
 
+// 发布前置硬校验（BUG-001）：切到 real 环境但域名仍是占位符时，fail-fast 阻止误发布
+if (ENV === 'real' && REAL_URL === 'https://YOUR_HTTPS_DOMAIN') {
+  throw new Error('正式环境域名未配置：请将 utils/config.js 的 REAL_URL 替换为已备案 HTTPS 域名，'
+    + '并在微信公众平台配置为 request 合法域名');
+}
+
 module.exports = {
-  BASE_URL: URLS[ENV] || URLS.devtool,
+  BASE_URL: URLS[ENV] || URLS.local,
   DEFAULT_TENANT_ID: 'tenant-suxu',
   ENV,
   // 教练工作台入口开关。会员端默认降级为「我的」页底部的小字链接，

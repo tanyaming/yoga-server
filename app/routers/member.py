@@ -17,8 +17,8 @@ mgr = require_min_role('STORE_MANAGER')
 
 
 class MemberBody(BaseModel):
-    phone: str = Field(min_length=7)
-    name: str = Field(min_length=1)
+    phone: str = Field(min_length=11, max_length=11, pattern=r'^1[3-9]\d{9}$')
+    name: str = Field(min_length=1, max_length=60)
     source_store_id: str = ''
     note: str = ''
 

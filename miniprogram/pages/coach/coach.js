@@ -3,10 +3,10 @@ const api = require('../../utils/api');
 Page({
   data: {
     loggedIn: false,
-    username: 'coach',
-    password: 'coach123',
+    username: '',
+    password: '',
     // §5 组件状态：禁用 / 加载 / 聚焦 / 错误四态由数据驱动，可真实触发
-    canSubmit: true,      // 预填演示账号；清空任一字段即触发禁用 + 占位态
+    canSubmit: false,     // 不再预填演示凭据（BUG-007）；账号密码填齐后由 onInput 放开
     loading: false,
     focusKey: '',
     loginErr: '',

@@ -9,16 +9,20 @@ from sqlalchemy.orm import Session
 from ..errors import BusinessRuleError, Conflict, NotFound, ValidationError
 from ..models import FollowUp, Member, MemberTag
 from ..repositories.base import write_audit
-from ..security import mask_phone, phone_hash, random_id
+from ..security import is_valid_phone, mask_phone, phone_hash, random_id
+
+_MEMBER_NAME_MAX = 60
 
 
 def create_member(db: Session, tenant_id: str, operator: Dict, data: dict) -> Member:
     phone = (data.get('phone') or '').strip()
     name = (data.get('name') or '').strip()
-    if not phone or len(phone) < 7:
-        raise ValidationError('手机号不合法')
+    if not is_valid_phone(phone):
+        raise ValidationError('手机号格式不合法（须为 11 位大陆手机号）')
     if not name:
         raise ValidationError('姓名不能为空')
+    if len(name) > _MEMBER_NAME_MAX:
+        raise ValidationError('姓名过长（最多 %d 字符）' % _MEMBER_NAME_MAX)
     ph = phone_hash(phone)
     exists = db.scalar(select(Member).where(Member.tenant_id == tenant_id, Member.phone_hash == ph))
     if exists:
@@ -32,9 +36,14 @@ def create_member(db: Session, tenant_id: str, operator: Dict, data: dict) -> Me
 
 def list_members(db: Session, tenant_id: str, keyword: str = '', limit: int = 100) -> List[Member]:
     stmt = select(Member).where(Member.tenant_id == tenant_id).order_by(Member.created_at.desc()).limit(limit)
-    if keyword:
-        like = '%' + keyword + '%'
-        stmt = stmt.where(Member.name.like(like) | Member.phone_mask.like(like))
+    kw = (keyword or '').strip()
+    if kw:
+        if is_valid_phone(kw):
+            # 完整 11 位手机号：走加盐哈希精确匹配（手机号是身份键，必须能精确搜到）
+            stmt = stmt.where(Member.phone_hash == phone_hash(kw))
+        else:
+            like = '%' + kw + '%'
+            stmt = stmt.where(Member.name.like(like) | Member.phone_mask.like(like))
     return list(db.scalars(stmt).all())
 
 
@@ -65,16 +74,19 @@ def import_members(db: Session, tenant_id: str, operator: Dict, rows: List[dict]
         phone = (row.get('phone') or '').strip()
         name = (row.get('name') or '').strip()
         idx = i + 1
-        if not phone or len(phone) < 7:
+        if not is_valid_phone(phone):
             failed.append({'row': idx, 'reason': '手机号不合法'})
+            continue
+        if not name:
+            failed.append({'row': idx, 'phone': mask_phone(phone), 'reason': '姓名为空'})
+            continue
+        if len(name) > _MEMBER_NAME_MAX:
+            failed.append({'row': idx, 'phone': mask_phone(phone), 'reason': '姓名过长'})
             continue
         ph = phone_hash(phone)
         if ph in seen or db.scalar(select(Member).where(
                 Member.tenant_id == tenant_id, Member.phone_hash == ph)):
             failed.append({'row': idx, 'phone': mask_phone(phone), 'reason': '手机号重复'})
-            continue
-        if not name:
-            failed.append({'row': idx, 'phone': mask_phone(phone), 'reason': '姓名为空'})
             continue
         seen.add(ph)
         m = Member(id=random_id(), tenant_id=tenant_id, phone_hash=ph, phone_mask=mask_phone(phone),

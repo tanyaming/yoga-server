@@ -5,11 +5,15 @@ import base64
 import hashlib
 import hmac
 import json
+import re
 import secrets
 import time
 from typing import Any, Dict, Optional, Tuple
 
 import jwt
+
+# 中国大陆手机号：1 开头，第二位 3-9，共 11 位（统一校验的单一事实来源）
+_PHONE_RE = re.compile(r'^1[3-9]\d{9}$')
 
 from .config import settings
 from .errors import Unauthorized
@@ -67,6 +71,11 @@ def new_refresh_token() -> Tuple[str, str]:
 
 def hash_refresh_token(raw: str) -> str:
     return hashlib.sha256(raw.encode('utf-8')).hexdigest()
+
+
+def is_valid_phone(phone: str) -> bool:
+    """校验中国大陆手机号格式：11 位、1[3-9] 开头。空/非法一律 False。"""
+    return bool(_PHONE_RE.match((phone or '').strip()))
 
 
 def mask_phone(phone: str) -> str:

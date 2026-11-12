@@ -12,10 +12,12 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..database import get_db
 from ..dependencies import AuthUser, get_current_user
-from ..errors import Unauthorized, ValidationError
+from ..errors import RateLimited, Unauthorized, ValidationError
 from ..models import Member, RefreshToken, User
-from ..security import (create_access_token, hash_refresh_token, mask_phone,
-                        new_refresh_token, phone_hash, random_id, verify_password)
+from ..security import (create_access_token, hash_refresh_token, is_valid_phone,
+                        mask_phone, new_refresh_token, phone_hash, random_id,
+                        verify_password)
+from ..utils.ratelimit import is_blocked, record_failure, reset
 from ..utils.timeutil import now_naive
 from ..utils.wechat import code2session
 
@@ -40,8 +42,8 @@ class WxLoginBody(BaseModel):
 class BindBody(BaseModel):
     code: str = Field(min_length=1)
     tenant_id: str = Field(min_length=1)
-    phone: str = Field(min_length=7)
-    name: str = Field(min_length=1)
+    phone: str = Field(min_length=11, max_length=11, pattern=r'^1[3-9]\d{9}$')
+    name: str = Field(min_length=1, max_length=60)
 
 
 def _user_payload(user: User) -> Dict:
@@ -53,14 +55,23 @@ def _user_payload(user: User) -> Dict:
 
 @router.post('/login')
 def login(body: LoginBody, db: Session = Depends(get_db)):
+    # 登录失败限流（BUG-010）：按「租户+用户名」计数，测试环境关闭以免干扰自动化
+    rkey = '%s:%s' % (body.tenant_id or '-', body.username)
+    rate_limit_on = settings.APP_ENV != 'test'
+    if rate_limit_on and is_blocked(rkey):
+        raise RateLimited('登录失败次数过多，请稍后再试')
     stmt = select(User).where(User.username == body.username)
     if body.tenant_id:
         stmt = stmt.where(User.tenant_id == body.tenant_id)
     user = db.scalar(stmt)
     if not user or not verify_password(body.password, user.password_hash):
+        if rate_limit_on:
+            record_failure(rkey)
         raise Unauthorized('账号或密码错误')
     if user.status != 'ACTIVE':
         raise Unauthorized('账号已停用')
+    if rate_limit_on:
+        reset(rkey)
     user.last_login_at = now_naive()
     store_ids = [user.store_id] if user.store_id else []
     access = create_access_token(user.id, user.tenant_id, user.role, store_ids)
@@ -96,7 +107,16 @@ def refresh(body: RefreshBody, db: Session = Depends(get_db)):
         raise Unauthorized('账号不存在或已停用')
     access = create_access_token(user.id, user.tenant_id, user.role,
                                  [user.store_id] if user.store_id else [])
-    return {'access_token': access, 'user': _user_payload(user)}
+    # 令牌轮换（BUG-008）：撤销旧 refresh 并签发新 refresh，旧令牌即刻失效。
+    # 若同一旧令牌被再次使用，将触发「已撤销」分支被拒，从而检测到令牌泄露/重用。
+    tok.revoked = True
+    refresh_raw, refresh_hash = new_refresh_token()
+    db.add(RefreshToken(
+        id=random_id(), tenant_id=user.tenant_id, user_id=user.id,
+        token_hash=refresh_hash,
+        expires_at=now_naive() + timedelta(days=settings.REFRESH_TOKEN_DAYS)))
+    db.commit()
+    return {'access_token': access, 'refresh_token': refresh_raw, 'user': _user_payload(user)}
 
 
 @router.post('/logout')
@@ -134,8 +154,8 @@ def wx_bind(body: BindBody, db: Session = Depends(get_db)):
     info = code2session(body.code)
     openid = info['openid']
     phone = body.phone.strip()
-    if len(phone) < 7:
-        raise ValidationError('手机号不合法')
+    if not is_valid_phone(phone):
+        raise ValidationError('手机号格式不合法（须为 11 位大陆手机号）')
     ph = phone_hash(phone)
     member = db.scalar(select(Member).where(
         Member.tenant_id == body.tenant_id, Member.phone_hash == ph))

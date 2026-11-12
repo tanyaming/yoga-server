@@ -19,7 +19,7 @@ from ..errors import (AppError, BookingClosed, BusinessRuleError, Conflict,
                       DuplicateBooking, EntitlementNotApplicable, NotFound,
                       ValidationError)
 from ..models import (AttendanceRecord, ClassSession, CourseTemplate, Enrollment,
-                      Entitlement, Store, User)
+                      Entitlement, Member, Store, User)
 from ..repositories.base import write_audit
 from ..security import random_id
 from ..services.notification import notify
@@ -286,6 +286,8 @@ def create_session(db: Session, tenant_id: str, operator: Dict, data: dict) -> C
         raise NotFound('课程模板不存在')
     ensure_store_active(db, tenant_id, template.store_id)
     starts_at = parse_dt(data['starts_at'])
+    if starts_at <= now_naive():
+        raise ValidationError('不能为过去时间排课')
     deadline_hours = check_deadline_hours(data.get('cancel_deadline_hours', 2))
     ends_at = starts_at + timedelta(minutes=template.duration_minutes)
     s = ClassSession(id=random_id(), tenant_id=tenant_id, template_id=template.id,
@@ -641,6 +643,13 @@ def _check_entitlement(db: Session, tenant_id: str, member_id: str,
                 and s.store_id not in _csv(e.applicable_store_ids)):
             reasons.append('权益不适用于该门店，且该卡不可跨店使用')
             continue
+        if not e.cross_store and not e.applicable_store_ids:
+            # 兜底：不可跨店但未显式配置适用门店时，以会员归属门店为准，
+            # 避免 cross_store=false 的卡在任意门店被消耗（BUG-006）
+            m = db.get(Member, member_id)
+            if m and m.source_store_id and s.store_id != m.source_store_id:
+                reasons.append('权益不适用于该门店，且该卡不可跨店使用')
+                continue
         return
     if not ents:
         raise BusinessRuleError('暂无可用课时，请先购买课程包')

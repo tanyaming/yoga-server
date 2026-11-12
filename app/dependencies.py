@@ -45,17 +45,18 @@ def get_current_user(
     payload = decode_access_token(token)
     user_id = payload.get('sub', '')
     tenant_id = payload.get('tid', '')
-    role = payload.get('role', '')
     user = db.get(User, user_id)
     if user is None or user.status != 'ACTIVE':
         raise Unauthorized('账号不存在或已停用')
     if user.tenant_id != tenant_id:
         raise Unauthorized('令牌租户与账号不一致')
     tenant_id_var.set(tenant_id)
+    # 角色以数据库为准（BUG-009）：令牌里的 role 是签发时的快照，账号被降级后
+    # 旧令牌在有效期内不应继续持有高权限；store_id 同理取库中当前值。
     return AuthUser(
         id=user.id,
         tenant_id=tenant_id,
-        role=role,
+        role=user.role or payload.get('role', ''),
         store_id=user.store_id or '',
         name=user.real_name or user.username,
     )
