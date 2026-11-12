@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+from ..errors import ValidationError
+
 BJ_TZ = timezone(timedelta(hours=8))
 
 
@@ -26,14 +28,19 @@ def business_date(dt: datetime | None = None) -> str:
 
 
 def parse_dt(value: str) -> datetime:
-    """接受 'YYYY-MM-DD HH:MM' / ISO8601，返回 naive 北京时间。"""
+    """接受 'YYYY-MM-DD HH:MM' / ISO8601，返回 naive 北京时间。
+
+    格式不合法时抛 ``ValidationError``（HTTP 400）而不是原生 ``ValueError`` ——
+    后者会穿透到 main.py 的兜底 handler 被渲染成 500，把「用户填错」误报成「服务故障」。
+    调用点（排期/收款/看板/会员端课程表/调课申请）因此全部自动收敛到 4xx。
+    """
     value = (value or '').strip().replace('T', ' ')
     for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d'):
         try:
             return datetime.strptime(value, fmt)
         except ValueError:
             continue
-    raise ValueError('时间格式不合法，应为 YYYY-MM-DD HH:MM')
+    raise ValidationError('时间格式不合法，应为 YYYY-MM-DD HH:MM')
 
 
 def hours_between(a: datetime, b: datetime) -> float:

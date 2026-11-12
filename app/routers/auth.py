@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import get_db
-from ..dependencies import get_current_user
+from ..dependencies import AuthUser, get_current_user
 from ..errors import Unauthorized, ValidationError
 from ..models import Member, RefreshToken, User
 from ..security import (create_access_token, hash_refresh_token, mask_phone,
@@ -70,6 +70,19 @@ def login(body: LoginBody, db: Session = Depends(get_db)):
         expires_at=now_naive() + timedelta(days=settings.REFRESH_TOKEN_DAYS)))
     db.commit()
     return {'access_token': access, 'refresh_token': refresh_raw, 'user': _user_payload(user)}
+
+
+@router.get('/me')
+def me(auth: AuthUser = Depends(get_current_user), db: Session = Depends(get_db)):
+    """当前登录账号信息。
+
+    前端刷新页面后 sessionStorage 里只有 token，必须能还原 role 才能收敛侧栏可见性
+    （T-27）；这里只回显自身信息，不引入任何写操作。
+    """
+    user = db.get(User, auth.id)
+    if not user or user.tenant_id != auth.tenant_id:
+        raise Unauthorized('账号不存在或已停用')
+    return _user_payload(user)
 
 
 @router.post('/refresh')

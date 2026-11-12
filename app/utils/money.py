@@ -20,24 +20,24 @@ def format_cents(cents: int) -> str:
     return '¥' + format(Decimal(int(cents)) / Decimal(100), ',.2f')
 
 
-def unit_price_cents(price_cents: int, total_sessions: int) -> int:
-    """单价 = 售价 ÷ 总课时，向下取整到分（尾差归入最后一节）。"""
+def prorate_refund_cents(price_cents: int, total_sessions: int, refund_sessions: int) -> int:
+    """按「退几节课时」比例折算退款金额：round(售价 × 退课时 / 总课时)。
+
+    用 Decimal + ROUND_HALF_UP，避免二进制浮点与 Python 银行家舍入带来的分位误差。
+    """
     if total_sessions <= 0:
         raise ValueError('总课时必须大于 0')
-    return int(price_cents) // int(total_sessions)
+    sessions = int(refund_sessions)
+    if sessions < 0 or sessions > int(total_sessions):
+        raise ValueError('退款课时必须落在 0..总课时 之间')
+    amount = (Decimal(int(price_cents)) * Decimal(sessions) / Decimal(int(total_sessions)))
+    return int(amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
 
 
-def refund_amount_cents(price_cents: int, total_sessions: int, used_sessions: int) -> int:
-    """按已用课时比例折算退款：售价 - 单价 × 已用课时。"""
-    if total_sessions <= 0:
-        raise ValueError('总课时必须大于 0')
-    used = max(0, min(int(used_sessions), int(total_sessions)))
-    return int(price_cents) - unit_price_cents(price_cents, total_sessions) * used
-
-
-def refund_formula_text(price_cents: int, total_sessions: int, used_sessions: int) -> str:
-    unit = unit_price_cents(price_cents, total_sessions)
-    remain = total_sessions - used_sessions
-    refund = refund_amount_cents(price_cents, total_sessions, used_sessions)
-    return '%s ÷ %d 节 = %s/节，剩余 %d 节 → 退 %s' % (
-        format_cents(price_cents), total_sessions, format_cents(unit), remain, format_cents(refund))
+def prorate_refund_formula_text(price_cents: int, total_sessions: int,
+                                refund_sessions: int) -> str:
+    """课时型退款的可复核公式文本，写进 refund_records.formula。"""
+    refund = prorate_refund_cents(price_cents, total_sessions, refund_sessions)
+    return '%s × %d 节 ÷ %d 节 = %s' % (
+        format_cents(price_cents), int(refund_sessions), int(total_sessions),
+        format_cents(refund))

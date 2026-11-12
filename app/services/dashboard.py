@@ -14,11 +14,14 @@ from sqlalchemy.orm import Session
 
 from ..errors import NotFound
 from ..models import (AttendanceRecord, DailyLedger, Entitlement, LedgerEntry, Member,
-                      PaymentRecord, ReconciliationDiff, Store)
+                      PaymentRecord, ReconciliationDiff, RefundRecord, Store)
 from ..repositories.base import write_audit
 from ..security import random_id
 from ..utils.money import cents_to_yuan
 from ..utils.timeutil import business_date, now_naive, parse_dt
+
+# 收入口径：只认「钱真的收到过」的单据状态；VOID 等于这笔钱从未入账
+INCOME_STATUSES = ('PAID', 'PARTIAL_REFUNDED', 'REFUNDED')
 
 
 def _day_range(date: str):
@@ -43,12 +46,20 @@ def get_overview(db: Session, tenant_id: str, store_id: str = '') -> Dict:
     attended = _today_att('ATTENDED')
     no_show = _today_att('NO_SHOW')
 
-    pay_stmt = select(func.coalesce(func.sum(PaymentRecord.amount_cents), 0)).where(
-        PaymentRecord.tenant_id == tenant_id, PaymentRecord.status == 'PAID',
+    pay_stmt = select(
+        func.coalesce(func.sum(PaymentRecord.amount_cents), 0),
+        func.coalesce(func.sum(PaymentRecord.refunded_cents), 0),
+    ).where(
+        PaymentRecord.tenant_id == tenant_id,
+        PaymentRecord.status.in_(INCOME_STATUSES),
         PaymentRecord.paid_at >= month_start)
     if store_id:
         pay_stmt = pay_stmt.where(PaymentRecord.store_id == store_id)
-    month_income = db.scalar(pay_stmt) or 0
+    month_gross, month_refund = db.execute(pay_stmt).one()
+    month_gross = int(month_gross or 0)
+    month_refund = int(month_refund or 0)
+    # 本月收入按净额口径：收款 - 退款。退款不回冲才是「账实对不上」的根因。
+    month_income = month_gross - month_refund
 
     active_stmt = select(func.count(Entitlement.id)).where(
         Entitlement.tenant_id == tenant_id, Entitlement.status == 'ACTIVE')
@@ -69,6 +80,8 @@ def get_overview(db: Session, tenant_id: str, store_id: str = '') -> Dict:
         'today_attended': attended, 'today_no_show': no_show,
         'today_consume': attended,  # 团课每节=1 人次消课
         'month_income_cents': month_income, 'month_income': cents_to_yuan(month_income),
+        'month_gross_cents': month_gross,
+        'month_refund_cents': month_refund, 'month_refund': cents_to_yuan(month_refund),
         'active_members': active_members, 'attendance_rate': att_rate,
         'pending_diffs': pending_diffs,
     }
@@ -91,18 +104,26 @@ def get_trend(db: Session, tenant_id: str, store_id: str = '', days: int = 7) ->
 
 
 def get_store_comparison(db: Session, tenant_id: str) -> List[Dict]:
+    """门店对比：收入与看板同口径（收款 - 退款），并单独给出退款额便于解释差额。"""
     stores = db.scalars(select(Store).where(Store.tenant_id == tenant_id)).all()
     out = []
     for st in stores:
-        income = db.scalar(select(func.coalesce(func.sum(PaymentRecord.amount_cents), 0)).where(
-            PaymentRecord.tenant_id == tenant_id, PaymentRecord.status == 'PAID',
+        gross = db.scalar(select(func.coalesce(func.sum(PaymentRecord.amount_cents), 0)).where(
+            PaymentRecord.tenant_id == tenant_id,
+            PaymentRecord.status.in_(INCOME_STATUSES),
+            PaymentRecord.store_id == st.id)) or 0
+        refunded = db.scalar(select(func.coalesce(func.sum(PaymentRecord.refunded_cents), 0)).where(
+            PaymentRecord.tenant_id == tenant_id,
+            PaymentRecord.status.in_(INCOME_STATUSES),
             PaymentRecord.store_id == st.id)) or 0
         consume = db.scalar(select(func.count(AttendanceRecord.id)).where(
             AttendanceRecord.tenant_id == tenant_id, AttendanceRecord.status == 'ATTENDED',
             AttendanceRecord.store_id == st.id)) or 0
         out.append({
             'store_id': st.id, 'name': st.name,
-            'income_cents': income, 'consume_sessions': consume,
+            'income_cents': int(gross) - int(refunded),
+            'gross_cents': int(gross), 'refund_cents': int(refunded),
+            'consume_sessions': consume,
         })
     return out
 
@@ -138,10 +159,22 @@ def reconcile_daily(db: Session, tenant_id: str, store_id: str, date: str) -> Di
     def _sum_pay():
         stmt = select(func.count(PaymentRecord.id),
                       func.coalesce(func.sum(PaymentRecord.amount_cents), 0)).where(
-            PaymentRecord.tenant_id == tenant_id, PaymentRecord.status == 'PAID',
+            PaymentRecord.tenant_id == tenant_id,
+            PaymentRecord.status.in_(INCOME_STATUSES),
             PaymentRecord.paid_at >= d0, PaymentRecord.paid_at < d1)
         if store_id:
             stmt = stmt.where(PaymentRecord.store_id == store_id)
+        cnt, sm = db.execute(stmt).one()
+        return cnt or 0, sm or 0
+
+    def _sum_refund():
+        """日终台账必须回冲退款，否则「收款-退款」与看板永远差一截。"""
+        stmt = select(func.count(RefundRecord.id),
+                      func.coalesce(func.sum(RefundRecord.refund_cents), 0)).where(
+            RefundRecord.tenant_id == tenant_id,
+            RefundRecord.created_at >= d0, RefundRecord.created_at < d1)
+        if store_id:
+            stmt = stmt.where(RefundRecord.store_id == store_id)
         cnt, sm = db.execute(stmt).one()
         return cnt or 0, sm or 0
 
@@ -154,8 +187,21 @@ def reconcile_daily(db: Session, tenant_id: str, store_id: str, date: str) -> Di
             stmt = stmt.where(AttendanceRecord.store_id == store_id)
         return db.scalar(stmt) or 0
 
+    def _count_active_entitlements():
+        # 权益不绑店（跨店通用），门店维度不做拆分，避免给出错误的小计
+        stmt = select(func.count(Entitlement.id)).where(
+            Entitlement.tenant_id == tenant_id, Entitlement.status == 'ACTIVE')
+        if store_id:
+            stmt = stmt.where(Entitlement.member_id.in_(
+                select(AttendanceRecord.member_id).where(
+                    AttendanceRecord.tenant_id == tenant_id,
+                    AttendanceRecord.store_id == store_id)))
+        return db.scalar(stmt) or 0
+
     pay_cnt, pay_cents = _sum_pay()
+    refund_cnt, refund_cents = _sum_refund()
     consume = _sum_consume()
+    active_ents = _count_active_entitlements()
 
     # 台账快照（同店同日幂等：先删旧再生成，保证重跑一致）
     old = db.scalars(select(DailyLedger).where(
@@ -165,27 +211,38 @@ def reconcile_daily(db: Session, tenant_id: str, store_id: str, date: str) -> Di
         db.delete(o)
     db.add(DailyLedger(id=random_id(), tenant_id=tenant_id, biz_date=date, store_id=store_id,
                        purchase_count=pay_cnt, purchase_cents=pay_cents,
+                       refund_count=refund_cnt, refund_cents=refund_cents,
+                       active_entitlements=active_ents,
                        consume_sessions=consume, status='GENERATED'))
 
-    # 差异检测：负余额会员（累计消耗 > 累计购买课时）
+    # 差异检测：负余额会员（累计消课 > 累计购买课时）
     diffs = _detect_negative_balance(db, tenant_id, store_id, date)
     return {
         'date': date, 'purchase_count': pay_cnt, 'purchase_cents': pay_cents,
-        'consume_sessions': consume, 'new_diffs': len(diffs),
+        'consume_sessions': consume,
+        'refund_count': refund_cnt, 'refund_cents': refund_cents,
+        'active_entitlements': active_ents,
+        'net_income_cents': int(pay_cents) - int(refund_cents),
+        'new_diffs': len(diffs),
     }
 
 
 def _detect_negative_balance(db: Session, tenant_id: str, store_id: str, date: str) -> List[str]:
-    """检测累计课时为负的会员（数据异常 → 挂起）。"""
+    """检测累计课时为负的会员（数据异常 → 挂起）。
+
+    口径：只把 ``kind='CONSUME'`` 的负流水计为「已消课」。REFUND/ADJUST 也是负向流水，
+    但它们是「把课时退回去」，计入消课会让每一次部分退款都误报负余额。
+    """
     members = db.scalars(select(Member.id).where(Member.tenant_id == tenant_id)).all()
     found = []
     for mid in members:
+        # 购买侧保持「所有正向流水」口径：补录课时（正 ADJUST）同样算已购
         bought = db.scalar(select(func.coalesce(func.sum(LedgerEntry.delta_sessions), 0)).where(
             LedgerEntry.tenant_id == tenant_id, LedgerEntry.member_id == mid,
             LedgerEntry.delta_sessions > 0)) or 0
         consumed = db.scalar(select(func.coalesce(func.sum(-LedgerEntry.delta_sessions), 0)).where(
             LedgerEntry.tenant_id == tenant_id, LedgerEntry.member_id == mid,
-            LedgerEntry.delta_sessions < 0)) or 0
+            LedgerEntry.kind == 'CONSUME', LedgerEntry.delta_sessions < 0)) or 0
         if consumed > bought:
             dup = db.scalar(select(ReconciliationDiff).where(
                 ReconciliationDiff.tenant_id == tenant_id, ReconciliationDiff.ref_id == mid,

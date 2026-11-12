@@ -1,6 +1,8 @@
 """商品与收款登记路由（店长及以上权限）。"""
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -39,7 +41,22 @@ class PaymentBody(BaseModel):
 
 
 class RefundBody(BaseModel):
+    """退款入参。
+
+    - 只传 ``entitlement_id``：全额退；
+    - 课时型传 ``refund_sessions``：按课时退；
+    - 储值型传 ``refund_cents``：按金额退；
+    - ``idempotency_key``：同键重放返回原退款单，不重复扣钱。
+    """
     entitlement_id: str = Field(min_length=1)
+    refund_sessions: Optional[int] = Field(default=None, ge=0)
+    refund_cents: Optional[int] = Field(default=None, ge=0)
+    idempotency_key: str = ''
+    store_id: str = ''
+    remark: str = ''
+
+
+class VoidBody(BaseModel):
     remark: str = ''
 
 
@@ -63,9 +80,10 @@ def create_product(body: ProductBody, auth: AuthUser = Depends(mgr), db: Session
 
 # ---------- 收款 ----------
 @router.get('')
-def list_payments(store_id: str = '', member_id: str = '',
+def list_payments(store_id: str = '', member_id: str = '', status: str = '',
                   auth: AuthUser = Depends(mgr), db: Session = Depends(get_db)):
-    return svc.list_payments(db, auth.tenant_id, store_id, member_id)
+    """收款单列表：status 可选精确过滤，默认含已退款与已作废单（作废必须可追溯）。"""
+    return svc.list_payments(db, auth.tenant_id, store_id, member_id, status)
 
 
 @router.post('')
@@ -78,7 +96,19 @@ def register_payment(body: PaymentBody, auth: AuthUser = Depends(mgr),
 
 @router.post('/refund')
 def refund(body: RefundBody, auth: AuthUser = Depends(mgr), db: Session = Depends(get_db)):
-    result = svc.refund(db, auth.tenant_id, _op(auth), body.entitlement_id, body.remark)
+    result = svc.refund(db, auth.tenant_id, _op(auth), body.entitlement_id, body.remark,
+                        refund_sessions=body.refund_sessions, refund_cents=body.refund_cents,
+                        idempotency_key=body.idempotency_key, store_id=body.store_id)
+    db.commit()
+    return result
+
+
+@router.post('/{payment_id}/void')
+def void_payment(payment_id: str, body: Optional[VoidBody] = None,
+                 auth: AuthUser = Depends(mgr), db: Session = Depends(get_db)):
+    """作废收款单：仅未消课、未退款的单据可作废（录错单冲正）。"""
+    remark = body.remark if body else ''
+    result = svc.void_payment(db, auth.tenant_id, _op(auth), payment_id, remark)
     db.commit()
     return result
 

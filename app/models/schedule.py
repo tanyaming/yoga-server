@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Index, Integer, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, TenantMixin, TimestampMixin
@@ -38,9 +38,17 @@ class CourseTemplate(Base, TenantMixin, TimestampMixin):
 
 
 class ClassSession(Base, TenantMixin, TimestampMixin):
-    """排期实例：某模板在具体时间的一场课。约课名额与状态在此。"""
+    """排期实例：某模板在具体时间的一场课。约课名额与状态在此。
+
+    ``booked`` 是「已占位人数」（BOOKED + OFFERED），由单语句条件 UPDATE 与
+    ``recount_session_booked`` 维护；库级 CHECK 兜底，任何绕过服务的写入都无法造出
+    超卖或负数名额（MySQL 8.0.16+ 才强制 CHECK，SQLite 全程强制）。
+    """
     __tablename__ = 'class_sessions'
-    __table_args__ = (Index('ix_session_store_time', 'store_id', 'starts_at'),)
+    __table_args__ = (
+        Index('ix_session_store_time', 'store_id', 'starts_at'),
+        CheckConstraint('booked >= 0 AND booked <= capacity', name='ck_session_booked_range'),
+    )
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     template_id: Mapped[str] = mapped_column(String(36), nullable=False)
     store_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
@@ -64,6 +72,8 @@ class Enrollment(Base, TenantMixin, TimestampMixin):
     __table_args__ = (
         UniqueConstraint('session_id', 'member_id', name='uq_enroll_session_member'),
         Index('ix_enroll_member_time', 'member_id', 'created_at'),
+        # 名额重算与点名名单都按 (session_id, status) 过滤
+        Index('ix_enroll_session_status', 'session_id', 'status'),
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     session_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)

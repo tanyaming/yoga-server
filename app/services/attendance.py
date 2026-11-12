@@ -21,6 +21,8 @@ from ..models import (AttendanceRecord, ClassSession, Enrollment, Entitlement,
 from ..repositories.base import write_audit
 from ..security import random_id
 from ..utils.timeutil import now_naive
+# 点名会让会员退出占位，需要复用排课服务的名额重算口径（schedule 不反向依赖本模块）
+from . import schedule as schedule_service
 
 
 def _get_session(db: Session, tenant_id: str, session_id: str) -> ClassSession:
@@ -104,6 +106,11 @@ def mark_attendance(db: Session, tenant_id: str, operator: Dict, session_id: str
                            sessions_consumed=1, status=status,
                            ledger_entry_id=ledger_entry_id)
     db.add(att)
+
+    # 点名后该会员退出 BOOKED/OFFERED，占位立即回落：不重算会让「已约」虚高、
+    # 课节一直挂在 FULL 上（名额口径 T-03 的组成部分）。
+    db.flush()
+    schedule_service.recount_session_booked(db, tenant_id, session_id)
 
     write_audit(db, tenant_id, operator['id'], operator['name'], 'ATTEND', 'attendance', att.id,
                 {'session_id': session_id, 'member_id': member_id, 'status': status})

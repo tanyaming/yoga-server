@@ -24,9 +24,20 @@ if _is_sqlite:
 
     @event.listens_for(engine, 'connect')
     def _sqlite_pragmas(dbapi_conn, _record):
-        """SQLite 打开外键约束，保证与 MySQL 行为一致。"""
+        """SQLite 连接级 PRAGMA：并发屏障 + 外键一致性。
+
+        - ``foreign_keys=ON``：与 MySQL 行为对齐，脏引用立即报错；
+        - ``journal_mode=WAL``：读写不互斥，并发写不再批量 ``database is locked``；
+        - ``busy_timeout=8000``：写锁竞争时自旋等待 8s，而不是立刻抛错；
+        - ``synchronous=NORMAL``：WAL 下兼顾安全与吞吐（崩溃最多丢最后一个提交）。
+
+        生产环境禁止使用 SQLite（见 config.validate），因此这里的取舍只影响开发/测试。
+        """
         cur = dbapi_conn.cursor()
         cur.execute('PRAGMA foreign_keys=ON')
+        cur.execute('PRAGMA journal_mode=WAL')
+        cur.execute('PRAGMA busy_timeout=8000')
+        cur.execute('PRAGMA synchronous=NORMAL')
         cur.close()
 else:
     engine = create_engine(

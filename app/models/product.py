@@ -69,7 +69,8 @@ class LedgerEntry(Base, TenantMixin, TimestampMixin):
     """权益流水：只追加不修改，带操作人留痕，可完整重放账本。"""
     __tablename__ = 'ledger_entries'
     __table_args__ = (
-        UniqueConstraint('idempotency_key', name='uq_ledger_idem'),
+        # 幂等键唯一性按租户收口：不同租户可用同一外部单据号，互不阻塞
+        UniqueConstraint('tenant_id', 'idempotency_key', name='uq_ledger_idem_tenant'),
         Index('ix_ledger_member_time', 'member_id', 'created_at'),
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
