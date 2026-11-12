@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from ..errors import (BookingClosed, BusinessRuleError, DuplicateBooking, NotFound,
                       ValidationError)
 from ..models import (AttendanceRecord, ClassSession, CourseTemplate, Enrollment,
-                      Entitlement, InAppMessage)
+                      Entitlement, InAppMessage, Store, User)
 from ..repositories.base import write_audit
 from ..security import random_id
 from ..utils.timeutil import now_naive, parse_dt
@@ -65,7 +65,13 @@ def create_session(db: Session, tenant_id: str, operator: Dict, data: dict) -> C
 
 
 def list_sessions(db: Session, tenant_id: str, store_id: str = '', date: str = '',
-                  coach_id: str = '') -> List[ClassSession]:
+                  coach_id: str = '', since=None) -> List[ClassSession]:
+    """排期查询。
+
+    date 有值时按单日精确查询（会员主动切换日期、后台核对历史均可用）；
+    since 为 datetime 时限制时间下界，用于会员端默认「今天及未来」，
+    避免把历史课节混进「今日课程」。两者可叠加，不改动后台历史查询口径。
+    """
     stmt = select(ClassSession).where(ClassSession.tenant_id == tenant_id)
     if store_id:
         stmt = stmt.where(ClassSession.store_id == store_id)
@@ -75,6 +81,8 @@ def list_sessions(db: Session, tenant_id: str, store_id: str = '', date: str = '
         d = parse_dt(date)
         nxt = d + timedelta(days=1)
         stmt = stmt.where(ClassSession.starts_at >= d, ClassSession.starts_at < nxt)
+    if since is not None:
+        stmt = stmt.where(ClassSession.starts_at >= since)
     stmt = stmt.order_by(ClassSession.starts_at.asc())
     return list(db.scalars(stmt).all())
 
@@ -100,8 +108,11 @@ def book(db: Session, tenant_id: str, member_id: str, session_id: str,
     now = now_naive()
     if s.status == 'CANCELLED':
         raise BusinessRuleError('该课程已取消')
-    if s.starts_at <= now:
-        raise BookingClosed('课程已开始，无法预约')
+    # PRD FR-13 规则③：开课前 N 小时（默认 2h）截止约课，与取消时限同一窗口。
+    # 前端据此展示「已截止」并禁用 CTA，此处为服务端的最终校验，二者必须一致。
+    booking_deadline = s.starts_at - timedelta(hours=s.cancel_deadline_hours)
+    if now >= booking_deadline:
+        raise BookingClosed('已超过预约截止时间（开课前 %d 小时）' % s.cancel_deadline_hours)
 
     # 重复约课
     dup = db.scalar(select(Enrollment).where(
@@ -239,10 +250,21 @@ def session_detail(db: Session, tenant_id: str, session_id: str, member_id: str 
             Enrollment.session_id == session_id, Enrollment.member_id == member_id,
             Enrollment.status.in_(('BOOKED', 'WAITLIST'))))
         my_status = enr.status if enr else ''
+    tpl = db.get(CourseTemplate, s.template_id) if s.template_id else None
+    if tpl and tpl.tenant_id != tenant_id:
+        tpl = None
+    coach = db.get(User, s.coach_id) if s.coach_id else None
+    store = db.get(Store, s.store_id) if s.store_id else None
     return {
         'id': s.id, 'course_name': s.course_name, 'store_id': s.store_id,
         'coach_id': s.coach_id, 'starts_at': s.starts_at.strftime('%Y-%m-%d %H:%M'),
         'ends_at': s.ends_at.strftime('%H:%M'), 'capacity': s.capacity, 'booked': s.booked,
         'status': s.status, 'cancel_deadline_hours': s.cancel_deadline_hours,
         'my_status': my_status,
+        # 供会员端还原定稿课程卡（教练 / 门店 / 课型 / 时长），不虚构教室等模型外字段
+        'coach_name': coach.real_name if coach else '',
+        'store_name': store.name if store else '',
+        'ctype': (tpl.ctype if tpl else 'GROUP'),
+        'duration_minutes': (tpl.duration_minutes if tpl else 60),
+        'cost_sessions': 1,  # 当前业务口径：一节课消耗 1 课时
     }

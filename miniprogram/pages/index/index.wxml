@@ -1,34 +1,85 @@
 <view class="page">
-  <!-- 顶部：会员与权益 -->
-  <view class="hero">
-    <view class="hero-greet">
-      <view class="hero-name">{{member.name || '欢迎'}}</view>
-      <view class="hero-sub">剩余课时</view>
+  <!-- 顶部：门店 + 宋体标题（定稿 m-home 结构，冷白底，不做深绿整块 hero） -->
+  <view class="app-header">
+    <view class="store-row">
+      <view class="store">
+        <view class="pin">⌖</view>
+        <text>{{storeName}}</text>
+        <text class="store-arrow">▾</text>
+      </view>
+      <text class="hello">{{greeting}}，{{member.name || '会员'}}</text>
     </view>
-    <view class="hero-bal">
-      <text class="bal-num">{{remainSessions}}</text>
-      <text class="bal-unit">节</text>
+    <view class="hero">
+      <view class="hero-date">{{todayLabel}}</view>
+      <view class="hero-title">今天，<text class="hero-em">动一下</text>。</view>
     </view>
   </view>
 
-  <!-- 课程列表 -->
-  <view class="section-title">今日课程</view>
-  <view wx:if="{{loading}}" class="empty">加载中…</view>
-  <view wx:elif="{{sessions.length === 0}}" class="empty">今日暂无课程</view>
+  <!-- 余额提醒：常态酸柠 1 处；余额不足 / 临近到期切暖陶语义（FR-19） -->
+  <view wx:if="{{notice}}" class="notice {{notice.urgent ? 'urgent' : ''}}" bindtap="goEntitlements">
+    <view class="n-ico">◈</view>
+    <view class="n-txt">
+      <view class="n-t1">{{notice.t1}}</view>
+      <view class="n-t2">{{notice.t2}}</view>
+    </view>
+    <view class="n-go">查看权益 →</view>
+  </view>
+
+  <!-- 7 天日期条：按日期查询，解决「今日课程混入昨天」 -->
+  <view class="datebar">
+    <view wx:for="{{days}}" wx:key="key"
+          class="date {{item.on ? 'on' : ''}} {{item.isAll ? 'date-all' : ''}}"
+          bindtap="onDateTap" data-key="{{item.key}}">
+      <view class="w">{{item.w}}</view>
+      <view class="d">{{item.d}}</view>
+      <view wx:if="{{item.has}}" class="pt"></view>
+    </view>
+  </view>
+
+  <!-- 筛选：全部 / 团课 / 私教 / 可约 -->
+  <view class="filter-row">
+    <view class="seg">
+      <view wx:for="{{filters}}" wx:key="key" class="seg-item {{filter === item.key ? 'on' : ''}}"
+            bindtap="onFilterTap" data-key="{{item.key}}">{{item.label}}</view>
+    </view>
+    <text class="filter-count mono">{{filtered.length}} 节</text>
+  </view>
+
+  <view class="section-title">{{listLabel}}</view>
+
+  <view wx:if="{{loading}}" class="empty">正在加载排期…</view>
+  <view wx:elif="{{filtered.length === 0}}" class="card empty-card">
+    <view class="empty-ico">◷</view>
+    <view class="empty-t">{{emptyText}}</view>
+    <view class="btn btn-secondary btn-sm" bindtap="goTomorrow">看看明天 →</view>
+  </view>
+
   <view wx:else class="course-list">
-    <view wx:for="{{sessions}}" wx:key="id" class="course-card" bindtap="goBooking" data-id="{{item.id}}">
-      <view class="course-time">
-        <text class="t-hh">{{item.starts_at}}</text>
+    <view wx:for="{{filtered}}" wx:key="id"
+          class="course {{item.ctype === 'PRIVATE' ? 'private' : ''}} {{item.disabled ? 'off' : ''}}"
+          bindtap="goBooking" data-id="{{item.id}}" data-state="{{item.state}}" data-date="{{item.dateKey}}">
+      <view class="c-time">
+        <view class="hh mono">{{item.hh}}</view>
+        <view class="mm mono">{{item.md}} · {{item.duration}}min</view>
       </view>
-      <view class="course-body">
-        <view class="course-name">{{item.course_name}}</view>
-        <view class="course-meta">{{item.booked}}/{{item.capacity}} 人</view>
-      </view>
-      <view class="course-state">
-        <text wx:if="{{item.my_status === 'BOOKED'}}" class="tag tag-green">已预约</text>
-        <text wx:elif="{{item.my_status === 'WAITLIST'}}" class="tag tag-mist">候补</text>
-        <text wx:elif="{{item.status === 'FULL'}}" class="tag tag-clay">已满</text>
-        <text wx:else class="tag tag-green">可约</text>
+      <view class="c-body">
+        <view class="c-title-row">
+          <view class="c-title-wrap">
+            <text class="c-title">{{item.course_name}}</text>
+            <text class="ctype">{{item.ctypeLabel}}</text>
+          </view>
+          <text class="tag {{item.tagCls}}">{{item.tagText}}</text>
+        </view>
+        <view class="c-meta">
+          {{item.coach_name || '教练待定'}}<text class="sep">·</text>{{item.store_name}}<text class="sep">·</text>耗 {{item.costSessions}} 课时
+        </view>
+        <view class="c-foot">
+          <view class="seats">
+            <view class="bar"><view class="fill {{item.seatPct >= 100 ? 'hot' : ''}}" style="width:{{item.seatPct}}%"></view></view>
+            <text class="mono">{{item.booked}}/{{item.capacity}} 人</text>
+          </view>
+          <view class="act {{item.actCls}}">{{item.actText}}</view>
+        </view>
       </view>
     </view>
   </view>
@@ -43,7 +94,7 @@
       <view class="field"><label>姓名</label>
         <input value="{{bindName}}" data-k="bindName" bindinput="onBindInput" />
       </view>
-      <view wx:if="{{bindErr}}" style="color:#C7503A;font-size:24rpx;margin-bottom:12rpx">{{bindErr}}</view>
+      <view wx:if="{{bindErr}}" class="field-error">⚠ {{bindErr}}</view>
       <view class="btn btn-primary" bindtap="submitBind">绑定并进入</view>
     </view>
   </view>

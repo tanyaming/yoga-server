@@ -15,7 +15,8 @@ from sqlalchemy.orm import Session
 
 from ..errors import (BusinessRuleError, Conflict, IdempotencyConflict, NotFound,
                       ValidationError)
-from ..models import Entitlement, LedgerEntry, Member, PaymentRecord, Product, RefundRecord
+from ..models import (Entitlement, LedgerEntry, Member, PaymentRecord, Product,
+                      RefundRecord, User)
 from ..repositories.base import write_audit
 from ..security import random_id
 from ..utils.money import refund_amount_cents, refund_formula_text
@@ -220,10 +221,16 @@ def member_ledger(db: Session, tenant_id: str, member_id: str, limit: int = 100)
     rows = db.scalars(select(LedgerEntry).where(
         LedgerEntry.tenant_id == tenant_id, LedgerEntry.member_id == member_id)
         .order_by(LedgerEntry.created_at.desc()).limit(limit)).all()
-    return [{
-        'id': r.id, 'kind': r.kind, 'delta_sessions': r.delta_sessions,
-        'delta_cents': r.delta_cents, 'balance_sessions': r.balance_sessions,
-        'balance_cents': r.balance_cents, 'remark': r.remark,
-        'created_at': r.created_at.strftime('%Y-%m-%d %H:%M'),
-        'operator_id': r.operator_id,
-    } for r in rows]
+    # FR-03：会员端流水可见操作人与备注（只读，不可修改）
+    out = []
+    for r in rows:
+        op = db.get(User, r.operator_id) if r.operator_id else None
+        out.append({
+            'id': r.id, 'kind': r.kind, 'delta_sessions': r.delta_sessions,
+            'delta_cents': r.delta_cents, 'balance_sessions': r.balance_sessions,
+            'balance_cents': r.balance_cents, 'remark': r.remark,
+            'created_at': r.created_at.strftime('%Y-%m-%d %H:%M'),
+            'operator_id': r.operator_id,
+            'operator_name': op.real_name if op else '',
+        })
+    return out

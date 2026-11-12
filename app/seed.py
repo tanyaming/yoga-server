@@ -2,22 +2,25 @@
 
 固定 ID：tenant-suxu / store-jingan / store-pudong / user-admin / user-coach /
 member-linxiao / member-suqing / member-wanglei。
+
+演示排期采用「滚动补种」：固定 ID 的课节过期后不再改动，改为补种新的未来课节，
+保证任何时刻打开小程序都有可约 / 已预约 / 可点名的课，且历史流水与记录不被清除。
 """
 from __future__ import annotations
 
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from .config import settings
 from .database import session_scope
 from .logging_config import get_logger
-from .models import (ClassSession, CourseTemplate, Entitlement, Member, Product, Store,
-                     Tenant, User)
+from .models import (ClassSession, CourseTemplate, Enrollment, Entitlement, Member,
+                     Product, Store, Tenant, User)
 from .security import hash_password, mask_phone, phone_hash
 from .services import payment as pay_svc
 from .services import schedule as sch_svc
-from .utils.timeutil import business_date, now_naive, parse_dt
+from .utils.timeutil import now_naive
 
 logger = get_logger('app.seed')
 
@@ -104,11 +107,13 @@ def seed_demo() -> None:
                 'idempotency_key': 'seed-pay-linxiao-pkg10',
             })
 
-        # 排课：未来时段（相对当前时间偏移，保证任何时刻启动都可约可点名）
+        # 首次排课：相对当前时间的未来时段。
+        # 偏移取 4 / 7 / 28 小时，向下取整到整点后仍距现在 > 3h，
+        # 避开「开课前 2h 截止约课」窗口，保证首次启动即可约可点名。
         offsets = {
-            'session-today-1': timedelta(hours=2),
-            'session-today-2': timedelta(hours=5),
-            'session-tomorrow-1': timedelta(days=1),
+            'session-today-1': timedelta(hours=4),
+            'session-today-2': timedelta(hours=7),
+            'session-tomorrow-1': timedelta(hours=28),
         }
         for sid, name, cap in [
             ('session-today-1', '普拉提塑形', 8),
@@ -121,12 +126,42 @@ def seed_demo() -> None:
                     id=sid, tenant_id=tenant.id, template_id=tmpl.id if tmpl else '',
                     store_id='store-jingan', coach_id='user-coach', course_name=name,
                     starts_at=starts, ends_at=starts + timedelta(minutes=60), capacity=cap))
-
-        # 林晓约今天上午的普拉提（用于点名演示）
         db.flush()
-        from .models import Enrollment
+
+        # 林晓约一节未过期的固定排期（用于点名演示）。
+        # 固定排期过期时不重试，避免 BookingClosed 阻断服务启动。
         if not db.scalar(select(Enrollment).where(
-                Enrollment.session_id == 'session-today-1', Enrollment.member_id == 'member-linxiao')):
-            sch_svc.book(db, tenant.id, 'member-linxiao', 'session-today-1', 'MEMBER')
+                Enrollment.session_id == 'session-today-1',
+                Enrollment.member_id == 'member-linxiao')):
+            first = db.get(ClassSession, 'session-today-1')
+            if first and first.starts_at > now_naive() + timedelta(hours=2):
+                sch_svc.book(db, tenant.id, 'member-linxiao', 'session-today-1', 'MEMBER')
+
+        # 滚动补种：仅当「距现在 > 2h 的课节」不足 3 节时补新的未来课节。
+        # 历史课节、预约、点名、流水一律保留，不删不改，避免账实演示数据被重置。
+        future_cnt = db.scalar(select(func.count(ClassSession.id)).where(
+            ClassSession.tenant_id == tenant.id,
+            ClassSession.starts_at > now_naive() + timedelta(hours=2),
+            ClassSession.status != 'CANCELLED')) or 0
+        if future_cnt < 3:
+            stamp = now_naive().strftime('%Y%m%d%H%M%S')
+            base = now_naive().replace(minute=0, second=0, microsecond=0)
+            fresh = []
+            for i, (name, cap, hours) in enumerate(
+                    [('普拉提塑形', 8, 4), ('流瑜伽', 12, 7), ('普拉提塑形', 8, 28)], start=1):
+                sid = 'session-roll-%s-%d' % (stamp, i)
+                starts = base + timedelta(hours=hours)
+                db.add(ClassSession(
+                    id=sid, tenant_id=tenant.id, template_id=tmpl.id if tmpl else '',
+                    store_id='store-jingan', coach_id='user-coach', course_name=name,
+                    starts_at=starts, ends_at=starts + timedelta(minutes=60), capacity=cap))
+                fresh.append(sid)
+            db.flush()
+            # 给第一节补一条会员预约，保证「已预约」态与教练点名链路可演示
+            try:
+                sch_svc.book(db, tenant.id, 'member-linxiao', fresh[0], 'MEMBER')
+            except Exception as exc:  # 演示补种失败不阻断启动，但必须留日志
+                logger.warning('演示预约补种跳过', extra={'extra': {'reason': str(exc)}})
+            logger.info('补种未来演示排期', extra={'extra': {'count': len(fresh)}})
 
         logger.info('种子数据就绪', extra={'extra': {'tenant': tenant.name}})

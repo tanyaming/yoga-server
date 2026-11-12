@@ -1,55 +1,32 @@
 <view class="page">
-  <!-- 会员信息 -->
-  <view class="profile">
+  <view class="app-header">
+    <view class="hero-date">会员中心</view>
+    <view class="hero-title">我的</view>
+  </view>
+
+  <view class="card profile">
     <view class="avatar">{{member.name ? member.name[0] : '?'}}</view>
-    <view>
+    <view class="p-info">
       <view class="p-name">{{member.name || '未登录'}}</view>
-      <view class="p-phone">{{member.phone_mask || ''}}</view>
+      <view class="p-phone">{{member.phone_mask || '微信授权后显示'}}</view>
     </view>
-    <view class="coach-entry" bindtap="goCoach">教练工作台</view>
+    <text class="tag tag-success">会员</text>
   </view>
 
-  <!-- 权益 -->
-  <view class="section-title">我的权益</view>
-  <view wx:if="{{entitlements.length === 0}}" class="card empty">暂无权益，请联系前台购买</view>
-  <view wx:for="{{entitlements}}" wx:key="id" class="card ent-card">
-    <view class="ent-top">
-      <text class="ent-name">{{item.product_name}}</text>
-      <text wx:if="{{item.status === 'ACTIVE'}}" class="tag tag-green">有效</text>
-      <text wx:else class="tag tag-gray">{{item.status}}</text>
-    </view>
-    <view class="ent-row">
-      <text class="ent-remain">{{item.ptype === 'STORED' ? (item.balance_cents / 100) + ' 元' : item.remain_sessions + ' 节'}}</text>
-      <text class="ent-total">{{item.ptype === 'STORED' ? '储值余额' : '剩余 / 共 ' + item.total_sessions + ' 节'}}</text>
-    </view>
-    <view class="ent-expire" wx:if="{{item.expires_at}}">有效期至 {{item.expires_at}}</view>
+  <view class="section-title">我的服务</view>
+  <view class="card menu">
+    <view class="menu-item" bindtap="goEntitlements"><text>我的权益</text><text class="m-arrow">→</text></view>
+    <view class="menu-item" bindtap="goMyBookings"><text>我的预约</text><text class="m-arrow">→</text></view>
+    <view class="menu-item" bindtap="goBooking"><text>课程表</text><text class="m-arrow">→</text></view>
   </view>
 
-  <!-- 预约 -->
-  <view class="section-title">我的预约</view>
-  <view wx:if="{{bookings.length === 0}}" class="card empty">暂无预约</view>
-  <view wx:for="{{bookings}}" wx:key="id" class="card book-item">
-    <view>
-      <view class="book-name">{{item.course_name}}</view>
-      <view class="book-time">{{item.starts_at}}</view>
-    </view>
-    <text wx:if="{{item.status === 'BOOKED'}}" class="tag tag-green">已预约</text>
-    <text wx:elif="{{item.status === 'WAITLIST'}}" class="tag tag-mist">候补</text>
-    <text wx:elif="{{item.status === 'ATTENDED'}}" class="tag tag-green">已到课</text>
-    <text wx:elif="{{item.status === 'NO_SHOW'}}" class="tag tag-clay">爽约</text>
-    <text wx:else class="tag tag-gray">已取消</text>
+  <view class="section-title">关于</view>
+  <view class="card about">
+    <view class="a-title">线下收款 · 线上记账</view>
+    <view class="a-text">本系统不提供在线支付。购卡、续卡、退款请到前台办理，课时与储值变动会实时写入权益账本，可随时在「权益」页核对流水。</view>
+    <view class="a-text">手机号等信息按规范脱敏展示；课时调整均记录操作人与时间。</view>
   </view>
 
-  <!-- 流水 -->
-  <view class="section-title">课时流水</view>
-  <view wx:if="{{ledger.length === 0}}" class="card empty">暂无流水</view>
-  <view wx:for="{{ledger}}" wx:key="id" class="card ledger-item">
-    <view>
-      <view class="lg-remark">{{item.remark}}</view>
-      <view class="lg-time">{{item.created_at}}</view>
-    </view>
-    <text class="lg-delta" style="{{item.delta_sessions > 0 ? 'color:#3E8C64' : 'color:#C7503A'}}">
-      {{item.delta_sessions > 0 ? '+' : ''}}{{item.delta_sessions}} 节
-    </text>
-  </view>
+  <!-- 教练入口降级：会员信息旁不再放显眼胶囊，改为底部文字链且受开关控制 -->
+  <view wx:if="{{showCoachEntry}}" class="coach-link" bindtap="goCoach">教练登录 · 工作台</view>
 </view>

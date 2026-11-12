@@ -1,34 +1,33 @@
-.page { padding-bottom: 40rpx; }
+/* 我的：冷白会员卡 + 服务入口 + 线下收款说明 */
+.app-header { padding: 24rpx 40rpx 8rpx; }
+.hero-date { font-size: 22rpx; color: var(--ink-3); }
+.hero-title { font-family: var(--f-cn); font-size: 48rpx; font-weight: 700; color: var(--ink); margin-top: 8rpx; }
 
-.profile {
-  display: flex; align-items: center; gap: 20rpx;
-  background: #123A2E; color: #FFFFFF; padding: 40rpx 32rpx;
-}
+.profile { display: flex; align-items: center; gap: 24rpx; }
 .avatar {
-  width: 88rpx; height: 88rpx; border-radius: 50%;
-  background: #D9F26B; color: #123A2E; font-size: 40rpx; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; flex: none;
+  width: 96rpx; height: 96rpx; border-radius: 50%; flex: none;
+  background: var(--pine); color: var(--paper);
+  font-size: 40rpx; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
 }
-.p-name { font-size: 34rpx; font-weight: 700; }
-.p-phone { font-size: 24rpx; color: rgba(255,255,255,.65); }
-.coach-entry {
-  margin-left: auto; padding: 10rpx 20rpx; border: 1rpx solid rgba(255,255,255,.4);
-  border-radius: 999rpx; font-size: 24rpx; color: #D9F26B;
+.p-info { flex: 1; min-width: 0; }
+.p-name { font-size: 34rpx; font-weight: 700; color: var(--ink); }
+.p-phone { font-size: 24rpx; color: var(--ink-2); margin-top: 4rpx; }
+
+.menu { padding: 8rpx 32rpx; }
+.menu-item {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 96rpx; font-size: 28rpx; color: var(--ink);
 }
+.menu-item + .menu-item { border-top: 1rpx solid var(--line-2); }
+.m-arrow { font-size: 26rpx; color: var(--muted); }
 
-.section-title { font-size: 26rpx; color: #5A7073; padding: 28rpx 32rpx 8rpx; }
+.about { padding: 28rpx 32rpx; }
+.a-title { font-size: 28rpx; font-weight: 700; color: var(--pine); margin-bottom: 16rpx; }
+.a-text { font-size: 24rpx; color: var(--ink-2); line-height: 1.7; margin-bottom: 12rpx; }
+.a-text:last-child { margin-bottom: 0; }
 
-.ent-card { }
-.ent-top { display: flex; justify-content: space-between; align-items: center; }
-.ent-name { font-size: 30rpx; font-weight: 600; color: #27393B; }
-.ent-row { display: flex; align-items: baseline; gap: 16rpx; margin-top: 16rpx; }
-.ent-remain { font-size: 44rpx; font-weight: 700; color: #123A2E; }
-.ent-total { font-size: 24rpx; color: #5A7073; }
-.ent-expire { font-size: 24rpx; color: #5F7579; margin-top: 8rpx; }
-
-.book-item, .ledger-item { display: flex; justify-content: space-between; align-items: center; }
-.book-name { font-size: 30rpx; font-weight: 600; color: #27393B; }
-.book-time { font-size: 24rpx; color: #5A7073; }
-.lg-remark { font-size: 28rpx; color: #27393B; }
-.lg-time { font-size: 22rpx; color: #5F7579; }
-.lg-delta { font-size: 30rpx; font-weight: 700; }
+.coach-link {
+  text-align: center; font-size: 22rpx; color: var(--ink-3);
+  padding: 40rpx 40rpx 24rpx; text-decoration: underline;
+}

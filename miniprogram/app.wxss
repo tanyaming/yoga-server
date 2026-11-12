@@ -1,68 +1,208 @@
-/* 全局样式 · 「冷底 × 原色」定稿配色（WXSS 用具体值） */
+/* ============================================================
+   素序瑜伽 · 小程序全局样式
+   唯一风格源：《场馆连锁客户管理平台 UI 设计规范 v1.0（FROZEN）》
+   ------------------------------------------------------------
+   空间层（V3 冷底）+ 物件层（原版组件色）分层，不混调、不取中间值。
+   §8 验收：业务样式禁止出现 #RRGGBB 字面量，全部引用本文件 token。
+   §9 变更：本文件新增的 --t-* 为标签语义色，属「新增 token」，
+            未修改任何冻结色值。
+   酸柠预算：主 CTA 与余额提醒各 1 处，每屏 ≤2 处；标签一律语义色。
+   ============================================================ */
 page {
+  /* —— 空间层：V3 晴空水润 —— */
   --canvas: #F1F7F7;
   --paper: #FFFFFF;
+  --paper-2: #F5FAF9;
   --line: #E0EBED;
+  --line-2: #EDF3F3;
   --ink: #27393B;
   --ink-2: #5A7073;
   --ink-3: #5F7579;
+  --muted: #5F7579;
+  --disabled: #9CB0B2;
+  --water-ink: #4C7B88;
+  --water: #7FA9B5;
+  --mint: #A9D7C9;
+
+  /* —— 物件层：原版静谧动能 —— */
   --pine: #123A2E;
+  --pine-2: #1B5540;
   --pine-3: #2A6E54;
   --lime: #D9F26B;
+  --lime-deep: #BFD842;
   --clay: #E08A63;
   --mist: #7FA8B8;
+  --danger: #C7503A;
   --success: #3E8C64;
-  background: #F1F7F7;
-  color: #27393B;
+  --success-ink: #347A57;
+
+  /* —— §9 新增：标签语义色（底色 + 文字），不改冻结值 —— */
+  --t-success-bg: #E7F3EC;
+  --t-success-ink: #347A57;
+  --t-pine-bg: #E4EFEA;
+  --t-pine-ink: #123A2E;
+  --t-clay-bg: #F8E7DE;
+  --t-clay-ink: #A4522C;
+  --t-mist-bg: #E6EFF2;
+  --t-mist-ink: #3C6B7E;
+  --t-neutral-bg: #F5FAF9;
+  --t-neutral-ink: #5F7579;
+  --t-danger-bg: #FBEDE9;
+  --t-danger-ink: #C7503A;
+  --t-lime-bg: #F0F8CE;
+  --t-lime-ink: #5A6B14;
+
+  /* —— 阴影 / 字体 / 度量 —— */
+  --sh-1: 0 1px 2px rgba(61,110,121,.04), 0 4px 14px rgba(61,110,121,.05);
+  --sh-2: 0 8px 28px rgba(61,110,121,.10), 0 2px 6px rgba(61,110,121,.05);
+  --sh-3: 0 24px 64px rgba(39,57,59,.18);
+  --sh-lime: 0 6px 18px rgba(191,216,66,.32);
+  --pine-wash: rgba(18,58,46,.10);
+  --clay-wash: rgba(224,138,99,.18);
+  --mask-wash: rgba(18,58,46,.40);
+  --mint-wash: rgba(169,215,201,.16);
+  --pine-line: rgba(255,255,255,.16);
+  --f-cn: "Songti SC", "Noto Serif SC", serif;
+  --f-mono: "SFMono-Regular", Consolas, monospace;
+  --ease: cubic-bezier(.22,.8,.28,1);
+  --dur: .26s;
+
+  background: var(--canvas);
+  color: var(--ink);
   font-size: 28rpx;
   line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
 }
 
-/* 通用卡片 */
+/* ---------- 页面与容器 ---------- */
+.page { min-height: 100vh; padding-bottom: 48rpx; }
 .card {
-  background: #FFFFFF;
-  border: 1rpx solid #E0EBED;
+  background: var(--paper);
+  border: 1rpx solid var(--line);
   border-radius: 24rpx;
-  padding: 28rpx;
-  margin: 20rpx 24rpx;
+  padding: 28rpx 32rpx;
+  margin: 0 40rpx 20rpx;
+  box-shadow: var(--sh-1);
 }
+.section-title {
+  font-size: 26rpx; font-weight: 600; color: var(--ink-2);
+  padding: 32rpx 40rpx 12rpx;
+}
+.section-sub { font-size: 22rpx; color: var(--ink-3); padding: 0 40rpx 12rpx; }
+.divider { height: 1rpx; background: var(--line-2); margin: 24rpx 0; }
+.spacer { flex: 1; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
 
-/* 通用按钮 */
+/* ---------- 按钮：五态（§5） ---------- */
 .btn {
   display: flex; align-items: center; justify-content: center;
-  border-radius: 16rpx; font-size: 30rpx; font-weight: 600; padding: 22rpx;
+  min-height: 88rpx; padding: 20rpx 28rpx;
+  border-radius: 16rpx; font-size: 30rpx; font-weight: 600;
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
-.btn-primary { background: #123A2E; color: #D9F26B; }
-.btn-secondary { background: #FFFFFF; color: #27393B; border: 1rpx solid #E0EBED; }
-.btn-disabled { opacity: .5; }
+.btn-primary { background: var(--lime); color: var(--pine); box-shadow: var(--sh-lime); }
+.btn-primary.is-pressed { background: var(--lime-deep); transform: scale(.985); }
+.btn-dark { background: var(--pine); color: var(--paper); }
+.btn-dark.is-pressed { background: var(--pine-2); }
+.btn-secondary { background: var(--paper); color: var(--ink); border: 1rpx solid var(--line); }
+.btn-ghost { background: transparent; color: var(--ink-2); }
+.btn-danger { background: var(--t-danger-bg); color: var(--t-danger-ink); }
+.btn-sm { min-height: 68rpx; font-size: 26rpx; padding: 14rpx 22rpx; }
+.btn-lg { min-height: 104rpx; font-size: 32rpx; }
+/* 禁用 / 加载：颜色之外必须配文案提示 */
+.btn.is-disabled, .btn-disabled { opacity: .42; color: var(--disabled); box-shadow: none; }
+.btn.is-loading { opacity: .72; }
 
-/* 标签 */
+/* ---------- 标签：七态语义 + 小圆点（§5 / §7 状态不只靠颜色） ---------- */
 .tag {
-  display: inline-block; padding: 4rpx 16rpx; border-radius: 999rpx; font-size: 22rpx;
+  display: inline-flex; align-items: center; gap: 8rpx;
+  padding: 6rpx 16rpx; border-radius: 999rpx;
+  font-size: 22rpx; font-weight: 600; line-height: 1.4;
 }
-.tag-green { background: #E9F7BE; color: #5A6B14; }
-.tag-clay { background: #F8E7DE; color: #A4522C; }
-.tag-mist { background: #E6EFF2; color: #3C6B7E; }
-.tag-gray { background: #F5FAF9; color: #5F7579; border: 1rpx solid #E0EBED; }
+.tag::before {
+  content: ''; width: 10rpx; height: 10rpx; border-radius: 50%;
+  background: currentColor; flex: none;
+}
+.tag-success { background: var(--t-success-bg); color: var(--t-success-ink); }
+.tag-pine   { background: var(--t-pine-bg);   color: var(--t-pine-ink); }
+.tag-clay   { background: var(--t-clay-bg);   color: var(--t-clay-ink); }
+.tag-mist   { background: var(--t-mist-bg);   color: var(--t-mist-ink); }
+.tag-neutral{ background: var(--t-neutral-bg);color: var(--t-neutral-ink); }
+.tag-danger { background: var(--t-danger-bg); color: var(--t-danger-ink); }
+/* 第 7 态保留组件矩阵完整性；页面不使用，避免酸柠超量与语义混用 */
+.tag-lime   { background: var(--t-lime-bg);   color: var(--t-lime-ink); }
 
-/* 空态 */
-.empty { text-align: center; color: #5F7579; padding: 80rpx 40rpx; font-size: 26rpx; }
+/* ---------- 进度条 ---------- */
+.bar { width: 112rpx; height: 8rpx; border-radius: 8rpx; background: var(--line); overflow: hidden; }
+.bar .fill { display: block; height: 100%; background: var(--pine-3); border-radius: 8rpx; }
+.bar .fill.hot { background: var(--clay); }
 
-/* 弹窗遮罩 */
+/* ---------- 余额提醒条：全页唯一高饱和块（酸柠第 1 处） ---------- */
+.notice {
+  display: flex; align-items: center; gap: 20rpx;
+  margin: 0 40rpx 24rpx; padding: 24rpx 28rpx;
+  border-radius: 24rpx; background: var(--lime); color: var(--pine);
+}
+.notice .n-ico {
+  width: 56rpx; height: 56rpx; border-radius: 16rpx; flex: none;
+  background: var(--pine-wash); display: flex; align-items: center;
+  justify-content: center; font-size: 28rpx;
+}
+.notice .n-txt { flex: 1; min-width: 0; }
+.notice .n-t1 { font-size: 26rpx; font-weight: 700; }
+.notice .n-t2 { font-size: 22rpx; opacity: .78; margin-top: 4rpx; }
+.notice .n-go {
+  font-size: 22rpx; font-weight: 700; white-space: nowrap;
+  background: var(--pine-wash); padding: 12rpx 20rpx; border-radius: 999rpx;
+}
+
+/* ---------- 日期条 / 分段控件 ---------- */
+.datebar { display: flex; gap: 16rpx; padding: 0 40rpx 24rpx; overflow-x: auto; }
+.date {
+  width: 92rpx; flex: none; padding: 16rpx 0; border-radius: 20rpx;
+  background: var(--paper); border: 1rpx solid var(--line); text-align: center;
+}
+.date .w { font-size: 22rpx; color: var(--ink-3); }
+.date .d { font-size: 34rpx; font-weight: 700; color: var(--ink); margin-top: 4rpx; font-family: var(--f-mono); }
+.date .pt { width: 8rpx; height: 8rpx; border-radius: 50%; background: var(--clay); margin: 8rpx auto 0; }
+.date.on { background: var(--pine); border-color: var(--pine); }
+.date.on .w, .date.on .d { color: var(--paper); }
+.date.on .pt { background: var(--paper); }
+.seg { display: inline-flex; background: var(--paper-2); border-radius: 999rpx; padding: 6rpx; }
+.seg .seg-item { padding: 10rpx 24rpx; border-radius: 999rpx; font-size: 24rpx; color: var(--muted); }
+.seg .seg-item.on { background: var(--pine); color: var(--paper); }
+
+/* ---------- 空态 / 骨架 ---------- */
+.empty { text-align: center; color: var(--ink-3); padding: 100rpx 40rpx; font-size: 26rpx; }
+.skeleton {
+  background: linear-gradient(90deg, var(--paper-2) 25%, var(--line-2) 50%, var(--paper-2) 75%);
+  background-size: 200% 100%; border-radius: 16rpx;
+}
+
+/* ---------- 弹窗 / 表单 ---------- */
 .mask {
-  position: fixed; inset: 0; background: rgba(18, 58, 46, .4);
+  position: fixed; inset: 0; background: var(--mask-wash);
   display: flex; align-items: center; justify-content: center; z-index: 100;
 }
 .dialog {
-  background: #FFFFFF; border-radius: 24rpx; width: 620rpx; max-width: 90%;
-  padding: 40rpx;
+  background: var(--paper); border-radius: 24rpx; width: 620rpx; max-width: 90%;
+  padding: 40rpx; box-shadow: var(--sh-3);
 }
-.dialog-title { margin: 0 0 24rpx; font-size: 32rpx; font-weight: 700; color: #27393B; }
-
-/* 表单 */
+.dialog-title { margin: 0 0 24rpx; font-size: 32rpx; font-weight: 700; color: var(--ink); }
 .field { margin-bottom: 24rpx; }
-.field label { display: block; font-size: 26rpx; color: #5A7073; margin-bottom: 12rpx; }
+.field label { display: block; font-size: 26rpx; color: var(--ink-2); margin-bottom: 12rpx; }
 .field input {
-  width: 100%; padding: 20rpx; border: 1rpx solid #E0EBED; border-radius: 16rpx;
-  font-size: 30rpx; background: #FFFFFF;
+  width: 100%; padding: 20rpx; box-sizing: border-box;
+  border: 1rpx solid var(--line); border-radius: 16rpx;
+  font-size: 30rpx; background: var(--paper); color: var(--ink);
 }
+.field-error { color: var(--danger); font-size: 24rpx; margin-bottom: 12rpx; }
+
+/* ---------- 列表行 ---------- */
+.row { display: flex; align-items: center; gap: 20rpx; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.row-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20rpx; }
+.muted { color: var(--ink-3); }
+.t-small { font-size: 24rpx; }
+.t-xs { font-size: 22rpx; }
+.t-bold { font-weight: 700; }

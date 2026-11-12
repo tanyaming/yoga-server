@@ -1,0 +1,54 @@
+/* 我的权益：卡包主卡 + 快捷入口 + 只读流水（FR-03 留痕） */
+.app-header { padding: 24rpx 40rpx 8rpx; }
+.hero-date { font-size: 22rpx; color: var(--ink-3); }
+.hero-title { font-family: var(--f-cn); font-size: 48rpx; font-weight: 700; color: var(--ink); margin-top: 8rpx; }
+
+.expire-strip {
+  display: flex; gap: 16rpx; align-items: center;
+  margin: 16rpx 40rpx 24rpx; padding: 20rpx 24rpx; border-radius: 16rpx;
+  background: var(--t-clay-bg); color: var(--t-clay-ink); font-size: 24rpx;
+}
+
+.cards { margin-bottom: 8rpx; }
+.bal {
+  position: relative; margin: 0 40rpx 20rpx; padding: 36rpx 32rpx;
+  border-radius: 24rpx; color: var(--paper); overflow: hidden;
+}
+.bal-main { background: var(--pine); }
+.bal-alt { background: var(--pine-2); }
+.bal-top { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.bal-name { font-size: 28rpx; font-weight: 700; }
+.bal .tag { background: var(--pine-line); color: var(--paper); }
+.bal-big { display: flex; align-items: baseline; gap: 16rpx; margin-top: 32rpx; }
+.bal-num { font-size: 72rpx; font-weight: 700; line-height: 1; }
+.bal-unit { font-size: 24rpx; opacity: .82; }
+.bal-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 32rpx; padding-top: 20rpx; border-top: 1rpx solid var(--pine-line);
+  font-size: 22rpx; opacity: .82;
+}
+
+.quick { display: flex; gap: 16rpx; padding: 8rpx 40rpx; }
+.quick-item {
+  flex: 1; background: var(--paper); border: 1rpx solid var(--line);
+  border-radius: 20rpx; padding: 24rpx 12rpx; text-align: center;
+}
+.q-ico { font-size: 34rpx; color: var(--pine-2); }
+.q-t { font-size: 22rpx; font-weight: 600; color: var(--ink); margin-top: 8rpx; }
+
+.flow-list { margin-bottom: 24rpx; }
+.flow-item { display: flex; align-items: center; gap: 20rpx; padding: 24rpx 28rpx; }
+.f-ico {
+  width: 60rpx; height: 60rpx; border-radius: 16rpx; flex: none;
+  display: flex; align-items: center; justify-content: center; font-size: 30rpx;
+}
+.f-ico.plus { background: var(--t-success-bg); color: var(--t-success-ink); }
+.f-ico.minus { background: var(--t-pine-bg); color: var(--t-pine-ink); }
+.f-body { flex: 1; min-width: 0; }
+.f-name { font-size: 26rpx; font-weight: 600; color: var(--ink); }
+.f-meta { font-size: 22rpx; color: var(--ink-3); margin-top: 4rpx; }
+.f-val { font-size: 28rpx; font-weight: 700; color: var(--danger); flex: none; }
+.f-val.up { color: var(--success-ink); }
+
+.empty-card { text-align: center; padding: 60rpx 40rpx; }
+.empty-t { font-size: 26rpx; color: var(--ink-3); margin-bottom: 24rpx; }

@@ -29,4 +29,9 @@ module.exports = {
   BASE_URL: URLS[ENV] || URLS.devtool,
   DEFAULT_TENANT_ID: 'tenant-suxu',
   ENV,
+  // 教练工作台入口开关。会员端默认降级为「我的」页底部的小字链接，
+  // 避免把教练能力放在会员信息旁的显眼位置（产品角色混淆）。
+  // 联调 / 演示期保持 true；上线前改为 false 即完全隐藏，
+  // 教练端届时改由独立入口或按角色下发进入。
+  SHOW_COACH_ENTRY: true,
 };

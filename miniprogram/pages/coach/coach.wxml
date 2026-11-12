@@ -1,5 +1,5 @@
 <view class="page">
-  <!-- 登录 -->
+  <!-- 教练登录 -->
   <view wx:if="{{!loggedIn}}" class="login">
     <view class="login-title">教练工作台</view>
     <view class="field"><label>账号</label>
@@ -8,7 +8,7 @@
     <view class="field"><label>密码</label>
       <input value="{{password}}" data-k="password" bindinput="onInput" password />
     </view>
-    <view wx:if="{{loginErr}}" class="login-err">{{loginErr}}</view>
+    <view wx:if="{{loginErr}}" class="login-err">⚠ {{loginErr}}</view>
     <view class="btn btn-primary" bindtap="login">登录</view>
     <view class="login-hint">演示账号 coach / coach123</view>
   </view>
@@ -25,15 +25,18 @@
 
     <view wx:if="{{today.length === 0}}" class="empty">今日暂无课程</view>
     <view wx:for="{{today}}" wx:key="id" class="card session-card" bindtap="openRoster" data-id="{{item.id}}">
-      <view class="s-time">{{item.starts_at}}</view>
+      <view class="s-time">
+        <view class="s-hh mono">{{item.hh}}</view>
+        <view class="s-md mono">{{item.md}}</view>
+      </view>
       <view class="s-body">
         <view class="s-name">{{item.course_name}}</view>
         <view class="s-meta">{{item.booked}}/{{item.capacity}} 人</view>
       </view>
       <view class="s-state">
         <text wx:if="{{item.status === 'FULL'}}" class="tag tag-clay">已满</text>
-        <text wx:elif="{{item.status === 'CANCELLED'}}" class="tag tag-gray">已取消</text>
-        <text wx:else class="tag tag-green">可点名</text>
+        <text wx:elif="{{item.status === 'CANCELLED'}}" class="tag tag-neutral">已取消</text>
+        <text wx:else class="tag tag-pine">可点名</text>
       </view>
     </view>
 
@@ -44,14 +47,14 @@
           <text class="r-title">{{roster.course_name}}</text>
           <text class="r-time">{{roster.starts_at}}</text>
         </view>
-        <view class="roster-count">{{roster.booked}} 人已约</view>
+        <view class="roster-count">{{roster.booked}} 人已约 · 点击按钮标记到场 / 爽约</view>
         <view wx:for="{{roster.items}}" wx:key="member_id" class="r-item">
           <view class="r-info">
             <view class="r-name">{{item.member_name}}</view>
             <view class="r-phone">{{item.phone_mask}}</view>
           </view>
           <view class="r-actions">
-            <text wx:if="{{item.status === 'ATTENDED'}}" class="tag tag-green">已到课</text>
+            <text wx:if="{{item.status === 'ATTENDED'}}" class="tag tag-success">已到课</text>
             <text wx:elif="{{item.status === 'NO_SHOW'}}" class="tag tag-clay">爽约</text>
             <block wx:else>
               <view class="r-btn ok" catchtap="mark" data-mid="{{item.member_id}}" data-status="ATTENDED">到课</view>

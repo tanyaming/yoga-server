@@ -1,0 +1,59 @@
+<view class="page">
+  <view class="app-header">
+    <view class="hero-date">权益账本 · 线下收款线上记账</view>
+    <view class="hero-title">我的卡包</view>
+  </view>
+
+  <!-- 到期提醒：暖陶语义，不与酸柠混用 -->
+  <view wx:if="{{expiring}}" class="expire-strip">
+    <text>◷</text>
+    <text><text class="t-bold">{{expiring.name}}</text> {{expiring.days}} 天后到期，剩余 {{expiring.left}}，到期未用课时按门店规则处理。</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">正在加载权益…</view>
+
+  <block wx:else>
+    <view wx:if="{{ents.length === 0}}" class="card empty-card">
+      <view class="empty-t">暂无权益，请联系前台购买课程包</view>
+      <view class="btn btn-secondary btn-sm" bindtap="renewTip">了解购卡方式</view>
+    </view>
+
+    <view class="cards">
+      <view wx:for="{{ents}}" wx:key="id" class="bal {{item.cardCls}}">
+        <view class="bal-top">
+          <text class="bal-name">{{item.product_name}}</text>
+          <text class="tag {{item.statusCls}}">{{item.statusText}}</text>
+        </view>
+        <view class="bal-big">
+          <text class="bal-num mono">{{item.remainText}}</text>
+          <text class="bal-unit">{{item.unitText}}</text>
+        </view>
+        <view class="bal-foot">
+          <text class="mono">有效期至 {{item.expireShort}}</text>
+          <text>素序 · 门店通用</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 快捷入口：只放真实可达或明确提示的动作，不虚构支付 / 门店页 -->
+    <view class="quick">
+      <view class="quick-item" bindtap="renewTip"><view class="q-ico">◈</view><view class="q-t">续卡咨询</view></view>
+      <view class="quick-item" bindtap="goBooking"><view class="q-ico">▦</view><view class="q-t">去约课</view></view>
+      <view class="quick-item" bindtap="goMyBookings"><view class="q-ico">◷</view><view class="q-t">我的预约</view></view>
+    </view>
+
+    <view class="section-title">课时流水</view>
+    <view class="section-sub">每笔变动均留痕：操作人、时间与备注，会员只读</view>
+    <view wx:if="{{ledger.length === 0}}" class="card empty-card"><view class="empty-t">暂无流水</view></view>
+    <view wx:else class="flow-list">
+      <view wx:for="{{ledger}}" wx:key="id" class="card flow-item">
+        <view class="f-ico {{item.up ? 'plus' : 'minus'}}">{{item.up ? '＋' : '−'}}</view>
+        <view class="f-body">
+          <view class="f-name">{{item.title}}</view>
+          <view class="f-meta">{{item.meta}}</view>
+        </view>
+        <text class="f-val mono {{item.up ? 'up' : ''}}">{{item.deltaText}}</text>
+      </view>
+    </view>
+  </block>
+</view>

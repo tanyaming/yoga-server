@@ -1,0 +1,20 @@
+/* 我的课：待上课 / 历史分段 + 状态标签与取消入口 */
+.app-header { padding: 24rpx 40rpx 8rpx; }
+.hero-date { font-size: 22rpx; color: var(--ink-3); }
+.hero-title { font-family: var(--f-cn); font-size: 48rpx; font-weight: 700; color: var(--ink); margin-top: 8rpx; }
+
+.seg-wrap { padding: 16rpx 40rpx 8rpx; }
+.book-card { display: flex; align-items: center; gap: 20rpx; }
+.b-time { width: 130rpx; flex: none; }
+.b-hh { font-size: 34rpx; font-weight: 700; color: var(--ink); }
+.b-md { font-size: 22rpx; color: var(--ink-3); margin-top: 4rpx; }
+.b-body { flex: 1; min-width: 0; }
+.b-name { font-size: 28rpx; font-weight: 600; color: var(--ink); }
+.b-meta { font-size: 22rpx; color: var(--ink-3); margin-top: 4rpx; }
+.b-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12rpx; flex: none; }
+.b-cancel {
+  font-size: 22rpx; color: var(--t-danger-ink); background: var(--t-danger-bg);
+  padding: 8rpx 16rpx; border-radius: 999rpx;
+}
+.empty-card { text-align: center; padding: 60rpx 40rpx; }
+.empty-t { font-size: 26rpx; color: var(--ink-3); margin-bottom: 24rpx; }

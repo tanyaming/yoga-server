@@ -1,27 +1,75 @@
-.page { padding-bottom: 40rpx; }
-
-.hero {
-  display: flex; align-items: center; justify-content: space-between;
-  background: #123A2E; color: #FFFFFF;
-  padding: 40rpx 32rpx; margin-bottom: 8rpx;
+/* 首页：冷白 hero + 定稿课程卡（间距 20px / 圆角 12px / 状态不依赖颜色） */
+.app-header { padding: 16rpx 40rpx 0; }
+.store-row { display: flex; align-items: center; justify-content: space-between; height: 64rpx; }
+.store { display: flex; align-items: center; gap: 12rpx; font-size: 26rpx; font-weight: 700; color: var(--ink); }
+.pin {
+  width: 44rpx; height: 44rpx; border-radius: 12rpx; flex: none;
+  background: var(--pine); color: var(--paper);
+  display: flex; align-items: center; justify-content: center; font-size: 24rpx;
 }
-.hero-name { font-size: 34rpx; font-weight: 700; }
-.hero-sub { font-size: 24rpx; color: rgba(255,255,255,.65); margin-top: 4rpx; }
-.hero-bal { text-align: right; }
-.bal-num { font-size: 56rpx; font-weight: 700; color: #D9F26B; }
-.bal-unit { font-size: 26rpx; color: #D9F26B; margin-left: 6rpx; }
+.store-arrow { font-size: 22rpx; color: var(--muted); }
+.hello { font-size: 22rpx; color: var(--ink-3); }
 
-.section-title { font-size: 26rpx; color: #5A7073; padding: 28rpx 32rpx 8rpx; }
-
-.course-list { padding: 0 24rpx; }
-.course-card {
-  display: flex; align-items: center; gap: 24rpx;
-  background: #FFFFFF; border: 1rpx solid #E0EBED; border-radius: 20rpx;
-  padding: 28rpx; margin-bottom: 20rpx;
+.hero { padding: 20rpx 40rpx 28rpx; }
+.hero-date { font-size: 22rpx; color: var(--ink-3); }
+.hero-title {
+  font-family: var(--f-cn); font-size: 52rpx; font-weight: 700;
+  line-height: 1.35; color: var(--ink); margin-top: 8rpx;
 }
-.course-time { flex: none; width: 150rpx; }
-.t-hh { font-size: 32rpx; font-weight: 700; color: #27393B; }
-.course-body { flex: 1; }
-.course-name { font-size: 30rpx; font-weight: 600; color: #27393B; }
-.course-meta { font-size: 24rpx; color: #5A7073; margin-top: 4rpx; }
-.course-state { flex: none; }
+.hero-em { color: var(--pine-2); }
+
+/* 紧急态：到期 / 余额不足用暖陶，语义固定不与酸柠混用 */
+.notice.urgent { background: var(--t-clay-bg); color: var(--t-clay-ink); }
+.notice.urgent .n-ico, .notice.urgent .n-go { background: var(--clay-wash); }
+
+.date-all .d { font-size: 26rpx; }
+.date-all .w { font-size: 20rpx; }
+.filter-row { display: flex; align-items: center; justify-content: space-between; padding: 0 40rpx 8rpx; }
+.filter-count { font-size: 22rpx; color: var(--ink-3); }
+
+.course-list { padding: 0 40rpx; }
+.course {
+  position: relative; display: flex; gap: 24rpx;
+  background: var(--paper); border: 1rpx solid var(--line);
+  border-radius: 24rpx; padding: 28rpx; margin-bottom: 20rpx;
+  box-shadow: var(--sh-1); overflow: hidden;
+}
+/* 左侧 3px 竖条：团课深绿、私教暖陶，与定稿一致 */
+.course::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 6rpx; background: var(--pine-3);
+}
+.course.private::before { background: var(--clay); }
+.course.off { opacity: .62; }
+
+.c-time { width: 116rpx; flex: none; }
+.c-time .hh {
+  font-size: 38rpx; font-weight: 700; line-height: 1.1;
+  color: var(--ink); letter-spacing: -.02em;
+}
+.c-time .mm { font-size: 20rpx; color: var(--ink-3); margin-top: 8rpx; }
+
+.c-body { flex: 1; min-width: 0; }
+.c-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; }
+.c-title-wrap { display: flex; align-items: center; gap: 10rpx; flex: 1; min-width: 0; }
+.c-title {
+  font-size: 28rpx; font-weight: 700; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ctype {
+  flex: none; font-size: 20rpx; color: var(--water-ink);
+  background: var(--t-mist-bg); padding: 2rpx 10rpx; border-radius: 999rpx;
+}
+.c-meta { font-size: 22rpx; color: var(--ink-3); margin-top: 8rpx; }
+.c-meta .sep { margin: 0 8rpx; }
+.c-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 20rpx; gap: 16rpx; }
+.seats { display: flex; align-items: center; gap: 12rpx; font-size: 20rpx; color: var(--ink-3); }
+
+.act { font-size: 22rpx; font-weight: 700; padding: 12rpx 20rpx; border-radius: 999rpx; white-space: nowrap; }
+.act-go { background: var(--pine); color: var(--paper); }
+.act-alt { background: var(--paper-2); color: var(--ink-2); border: 1rpx solid var(--line); }
+.act-off { background: var(--t-neutral-bg); color: var(--t-neutral-ink); }
+
+.empty-card { text-align: center; padding: 60rpx 40rpx; }
+.empty-ico { font-size: 48rpx; color: var(--water-ink); }
+.empty-t { font-size: 26rpx; color: var(--ink-3); margin: 16rpx 0 24rpx; }

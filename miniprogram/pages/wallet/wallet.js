@@ -1,37 +1,25 @@
 const api = require('../../utils/api');
+const config = require('../../utils/config');
 
 Page({
   data: {
     member: null,
-    entitlements: [],
-    bookings: [],
-    ledger: [],
-    tab: 'entitlements',
+    showCoachEntry: config.SHOW_COACH_ENTRY,
   },
 
-  onShow() {
-    this.loadData();
-  },
+  onShow() { this.loadData(); },
 
   async loadData() {
     try {
-      const [me, ents, bookings, ledger] = await Promise.all([
-        api.request('member', '/api/app/me'),
-        api.request('member', '/api/app/entitlements'),
-        api.request('member', '/api/app/bookings'),
-        api.request('member', '/api/app/ledger'),
-      ]);
-      this.setData({ member: me, entitlements: ents, bookings, ledger });
+      const me = await api.request('member', '/api/app/me');
+      this.setData({ member: me });
     } catch (e) {
       wx.showToast({ title: e.message, icon: 'none' });
     }
   },
 
-  switchTab(e) {
-    this.setData({ tab: e.currentTarget.dataset.t });
-  },
-
-  goCoach() {
-    wx.navigateTo({ url: '/pages/coach/coach' });
-  },
+  goEntitlements() { wx.switchTab({ url: '/pages/entitlements/entitlements' }); },
+  goMyBookings() { wx.switchTab({ url: '/pages/mybookings/mybookings' }); },
+  goBooking() { wx.switchTab({ url: '/pages/index/index' }); },
+  goCoach() { wx.navigateTo({ url: '/pages/coach/coach' }); },
 });

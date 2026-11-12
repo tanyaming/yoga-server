@@ -1,22 +1,56 @@
 <view class="page" wx:if="{{session}}">
-  <view class="detail-card">
-    <view class="d-name">{{session.course_name}}</view>
-    <view class="d-row"><text class="d-label">时间</text><text>{{session.starts_at}} - {{session.ends_at}}</text></view>
-    <view class="d-row"><text class="d-label">名额</text><text>{{session.booked}} / {{session.capacity}} 人</text></view>
-    <view class="d-row"><text class="d-label">状态</text>
-      <text wx:if="{{myStatus === 'BOOKED'}}" class="tag tag-green">已预约</text>
-      <text wx:elif="{{myStatus === 'WAITLIST'}}" class="tag tag-mist">候补中</text>
-      <text wx:elif="{{session.status === 'FULL'}}" class="tag tag-clay">已满</text>
-      <text wx:else class="tag tag-green">可预约</text>
+  <!-- 课程信息：深松绿结构块，承担情绪；权益与规则留在冷白区承担理性 -->
+  <view class="hero-card">
+    <view class="hc-name">{{session.course_name}}</view>
+    <view class="hc-meta">
+      <text>{{session.starts_at}} — {{session.ends_at}}</text>
+      <text>{{session.store_name || '门店待定'}} · {{session.coach_name || '教练待定'}}</text>
+      <text>{{session.ctype === 'PRIVATE' ? '私教' : '团课'}} · {{session.duration_minutes || 60}} min</text>
+    </view>
+    <view class="hc-foot">
+      <text class="mono">名额 {{session.booked}} / {{session.capacity}}</text>
+      <text class="hc-state">{{stateText}}</text>
     </view>
   </view>
 
+  <!-- 本次扣课权益：展示有效权益与余额，不虚构「可指定扣哪张卡」的交互 -->
+  <view class="section-title">本次扣课权益</view>
+  <view class="card">
+    <view wx:for="{{ents}}" wx:key="id" class="ent-row">
+      <view class="ent-info">
+        <view class="ent-name">{{item.product_name}}</view>
+        <view class="ent-sub">有效期至 {{item.expireShort}}</view>
+      </view>
+      <view class="ent-bal mono">{{item.balText}}</view>
+    </view>
+    <view wx:if="{{ents.length === 0}}" class="t-small muted">暂无有效权益，请先到前台购买课程包</view>
+    <view class="divider"></view>
+    <view class="cost-row">
+      <text>本次消耗</text>
+      <text class="mono cost-num">{{cost}} 课时</text>
+    </view>
+    <view class="t-xs muted">系统按先进先出，从最早到期的有效权益中扣除；教练点名到课后正式入账。</view>
+  </view>
+
+  <!-- 预约规则：把「怎么扣、能不能反悔」在点击前讲清楚 -->
+  <view class="section-title">预约规则</view>
+  <view class="card rules">
+    <view class="rule"><text class="r-k mono">01</text><text>本次消耗 <text class="t-bold">{{cost}} 课时</text>，确认后即时锁定名额，上课点名后正式扣除。</text></view>
+    <view class="rule"><text class="r-k mono">02</text><text>开课前 <text class="t-bold">{{deadlineHours}} 小时</text>可免费取消并返还课时；超时取消将计入爽约。</text></view>
+    <view class="rule"><text class="r-k mono">03</text><text>累计 3 次爽约将限制 7 天内约课，规则由门店设置。</text></view>
+  </view>
+
+  <view wx:if="{{warn}}" class="warn">⚠ {{warn}}</view>
   <view wx:if="{{result}}" class="result-tip">{{result}}</view>
 
-  <view class="actions">
-    <view wx:if="{{!myStatus}}" class="btn btn-primary" bindtap="confirmBook">确认约课</view>
-    <view wx:elif="{{myStatus === 'WAITLIST'}}" class="btn btn-secondary" bindtap="confirmCancel">取消候补</view>
-    <view wx:else class="btn btn-secondary" bindtap="confirmCancel">取消预约</view>
+  <view class="bottom-space"></view>
+  <view class="bottom-cta">
+    <view class="cta-line"><text>本次消耗</text><text class="mono"><text class="t-bold">{{cost}}</text> 课时</text></view>
+    <view class="btn {{cta.cls}} {{submitting ? 'is-loading' : ''}}" bindtap="onCta">{{cta.text}}</view>
   </view>
 </view>
-<view wx:else class="empty">加载中…</view>
+
+<view wx:else class="empty-wrap">
+  <view class="empty">{{loading ? '正在加载课程…' : '课程不存在或已下架'}}</view>
+  <view wx:if="{{!loading}}" class="btn btn-secondary btn-sm" bindtap="goBack">返回课程表</view>
+</view>

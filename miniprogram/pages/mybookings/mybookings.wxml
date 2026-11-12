@@ -1,0 +1,38 @@
+<view class="page">
+  <view class="app-header">
+    <view class="hero-date">预约与到课记录</view>
+    <view class="hero-title">我的课</view>
+  </view>
+
+  <view class="seg-wrap">
+    <view class="seg">
+      <view class="seg-item {{tab === 'upcoming' ? 'on' : ''}}" bindtap="onTab" data-k="upcoming">待上课 {{upcoming.length}}</view>
+      <view class="seg-item {{tab === 'history' ? 'on' : ''}}" bindtap="onTab" data-k="history">历史 {{history.length}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">正在加载预约…</view>
+  <block wx:else>
+    <view wx:if="{{shown.length === 0}}" class="card empty-card">
+      <view class="empty-t">{{emptyText}}</view>
+      <view wx:if="{{tab === 'upcoming'}}" class="btn btn-secondary btn-sm" bindtap="goBooking">去约课 →</view>
+    </view>
+    <view wx:else class="list">
+      <view wx:for="{{shown}}" wx:key="id" class="card book-card"
+            bindtap="goDetail" data-sid="{{item.session_id}}" data-date="{{item.dateKey}}">
+        <view class="b-time">
+          <view class="b-hh mono">{{item.hh}}</view>
+          <view class="b-md mono">{{item.md}}</view>
+        </view>
+        <view class="b-body">
+          <view class="b-name">{{item.course_name}}</view>
+          <view class="b-meta">{{item.store_id || '门店'}} · {{item.statusText}}</view>
+        </view>
+        <view class="b-right">
+          <text class="tag {{item.tagCls}}">{{item.statusText}}</text>
+          <view wx:if="{{item.canCancel}}" class="b-cancel" catchtap="cancel" data-id="{{item.id}}">取消</view>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

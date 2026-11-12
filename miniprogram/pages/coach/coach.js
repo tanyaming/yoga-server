@@ -37,7 +37,12 @@ Page({
 
   async loadToday() {
     try {
-      const today = await api.request('coach', '/api/coach/today');
+      const rows = await api.request('coach', '/api/coach/today');
+      // 时间拆成 HH:MM + MM-DD 两行，避免完整时间戳在窄列里折行
+      const today = (rows || []).map((s) => Object.assign({}, s, {
+        hh: (s.starts_at || '').slice(11, 16),
+        md: (s.starts_at || '').slice(5, 10),
+      }));
       this.setData({ today });
     } catch (e) {
       wx.showToast({ title: e.message, icon: 'none' });

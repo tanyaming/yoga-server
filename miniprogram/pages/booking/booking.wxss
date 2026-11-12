@@ -1,12 +1,49 @@
-.page { padding: 24rpx; }
-
-.detail-card { background: #FFFFFF; border: 1rpx solid #E0EBED; border-radius: 24rpx; padding: 40rpx 32rpx; }
-.d-name { font-size: 40rpx; font-weight: 700; color: #27393B; margin-bottom: 24rpx; }
-.d-row { display: flex; justify-content: space-between; padding: 16rpx 0; font-size: 28rpx; color: #27393B; border-top: 1rpx solid #EDF3F3; }
-.d-label { color: #5A7073; }
-
-.result-tip {
-  margin: 24rpx 0; padding: 20rpx; border-radius: 16rpx; font-size: 26rpx;
-  background: #F5FAF9; color: #27393B;
+/* 约课确认页：深绿主卡 + 冷白权益/规则 + 底部吸底 CTA */
+.hero-card {
+  margin: 24rpx 40rpx 8rpx; padding: 36rpx 32rpx;
+  border-radius: 24rpx; background: var(--pine); color: var(--paper);
+  box-shadow: inset 0 -1rpx 0 var(--mint-wash);
 }
-.actions { margin-top: 40rpx; }
+.hc-name { font-family: var(--f-cn); font-size: 44rpx; font-weight: 700; line-height: 1.3; }
+.hc-meta { display: flex; flex-direction: column; gap: 8rpx; margin-top: 20rpx; font-size: 24rpx; opacity: .88; }
+.hc-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 28rpx; padding-top: 20rpx; border-top: 1rpx solid var(--pine-line);
+  font-size: 22rpx;
+}
+.hc-state { font-weight: 700; color: var(--paper); }
+
+.ent-row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; padding: 12rpx 0; }
+.ent-info { flex: 1; min-width: 0; }
+.ent-name { font-size: 28rpx; font-weight: 600; color: var(--ink); }
+.ent-sub { font-size: 22rpx; color: var(--ink-3); margin-top: 4rpx; }
+.ent-bal { font-size: 30rpx; font-weight: 700; color: var(--pine); flex: none; }
+.cost-row { display: flex; align-items: baseline; justify-content: space-between; font-size: 26rpx; color: var(--ink-2); }
+.cost-num { font-size: 36rpx; font-weight: 700; color: var(--ink); }
+
+.rules { padding-top: 8rpx; padding-bottom: 8rpx; }
+.rule { display: flex; gap: 20rpx; padding: 18rpx 0; font-size: 24rpx; color: var(--ink-2); line-height: 1.6; }
+.rule + .rule { border-top: 1rpx solid var(--line-2); }
+.r-k { flex: none; font-size: 22rpx; color: var(--water-ink); font-weight: 700; }
+
+.warn {
+  margin: 0 40rpx 20rpx; padding: 20rpx 24rpx; border-radius: 16rpx;
+  background: var(--t-clay-bg); color: var(--t-clay-ink); font-size: 24rpx;
+}
+.result-tip {
+  margin: 0 40rpx 20rpx; padding: 20rpx 24rpx; border-radius: 16rpx;
+  background: var(--t-success-bg); color: var(--t-success-ink); font-size: 26rpx;
+}
+
+.bottom-space { height: 220rpx; }
+.bottom-cta {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: var(--paper); border-top: 1rpx solid var(--line);
+  padding: 20rpx 40rpx calc(20rpx + env(safe-area-inset-bottom));
+}
+.cta-line {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: 24rpx; color: var(--ink-3); margin-bottom: 16rpx;
+}
+.cta-line .mono { font-size: 28rpx; color: var(--ink); }
+.empty-wrap { padding-top: 120rpx; }

@@ -10,6 +10,7 @@ from ..dependencies import get_current_member
 from ..models import Member
 from ..services import payment as pay_svc
 from ..services import schedule as sch_svc
+from ..utils.timeutil import business_date, parse_dt
 
 router = APIRouter(prefix='/api/app', tags=['app'])
 
@@ -35,7 +36,10 @@ def me(member: Member = Depends(get_current_member), db: Session = Depends(get_d
 @router.get('/sessions')
 def sessions(store_id: str = '', date: str = '',
              member: Member = Depends(get_current_member), db: Session = Depends(get_db)):
-    rows = sch_svc.list_sessions(db, member.tenant_id, store_id, date)
+    # 会员端默认只看「今天及未来」，避免历史课节混进课程表；
+    # 主动传 date 时按指定日期查询（含历史），供日期条回看与后台核对。
+    since = None if date else parse_dt(business_date())
+    rows = sch_svc.list_sessions(db, member.tenant_id, store_id, date, since=since)
     out = []
     for s in rows:
         d = sch_svc.session_detail(db, member.tenant_id, s.id, member.id)
