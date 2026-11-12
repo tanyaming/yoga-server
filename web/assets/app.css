@@ -83,11 +83,18 @@ body {
 .sidebar-brand .brand-mark { background: rgba(255,255,255,.1); color: var(--lime); width: 38px; height: 38px; font-size: 19px; }
 .brand-name { font-family: var(--f-cn); font-size: 15px; font-weight: 700; color: #fff; }
 .brand-sub { font-size: 11px; color: rgba(255,255,255,.55); }
-.sidebar-nav { flex: 1; padding: 8px 12px; overflow-y: auto; }
+/* 侧栏菜单：小视口（如 1080×500）放不下 9 项时必须可滚动，
+   且当前项要能被滚进可视区（见 app.js 的 keepNavItemVisible），因此：
+   - scrollbar-gutter: stable 预留滚动条槽位，避免出现/消失时文字横向跳动；
+   - padding-bottom 留 8px，让最后一个菜单项与 .sidebar-foot 的分隔线不贴上。 */
+.sidebar-nav {
+  flex: 1; padding: 8px 12px 8px; overflow-y: auto;
+  scrollbar-gutter: stable;
+}
 .sidebar-nav a {
-  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
   border-radius: var(--r-sm); color: rgba(255,255,255,.78);
-  text-decoration: none; font-size: 14px; margin-bottom: 2px;
+  text-decoration: none; font-size: 14px; margin-bottom: 1px;
 }
 .sidebar-nav a:hover { background: rgba(255,255,255,.07); color: #fff; }
 .sidebar-nav a.on { background: var(--lime); color: var(--pine); font-weight: 700; }
@@ -167,7 +174,13 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .field input:focus, .field select:focus, .field textarea:focus {
   outline: none; border-color: var(--pine-3); box-shadow: 0 0 0 3px rgba(42,110,84,.12);
 }
-.form-actions { display: flex; gap: 10px; margin-top: 18px; }
+/* 弹窗底部操作条：位于滚动区外，色块贴住弹窗底边，不遮挡任何字段 */
+.form-actions {
+  display: flex; gap: 10px; flex: none;
+  margin: 0; padding: 12px 24px 20px;
+  background: var(--paper); border-top: 1px solid var(--line-2);
+  border-radius: 0 0 var(--r-md) var(--r-md);
+}
 
 /* ---------- 工具条 / 弹窗 ---------- */
 .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -176,14 +189,29 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
   padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-sm);
   font-size: 13px; background: var(--white); color: var(--ink);
 }
+
+/* ---------- 复选组 / 表单说明（门店·账号·模板） ---------- */
+.check-group { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 2px 0; }
+.check-group label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ink-2); cursor: pointer;
+}
+.check-group input[type="checkbox"] {
+  width: auto; margin: 0; padding: 0; accent-color: var(--pine);
+}
+.form-hint { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+.toolbar .form-hint { color: var(--ink-3); }
 .modal-mask {
   position: fixed; inset: 0; background: rgba(18,58,46,.35);
   display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px;
 }
+/* 弹窗：内容区独立滚动，底部操作条固定在滚动区外（小视口下按钮始终可见且不遮挡字段） */
 .modal {
   background: var(--paper); border-radius: var(--r-md); width: 520px; max-width: 100%;
-  max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: var(--sh-3);
+  max-height: 90vh; display: flex; flex-direction: column;
+  padding: 0; box-shadow: var(--sh-3);
 }
+.modal-body { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 24px 8px; }
 .modal h3 { font-family: var(--f-cn); margin: 0 0 18px; font-size: 17px; }
 .empty { text-align: center; color: var(--ink-3); padding: 40px 20px; font-size: 14px; }
 
@@ -206,8 +234,11 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 }
 
 /* ---------- Toast ---------- */
+/* tokens.css 里的 .toast 用的是 top:24px，这里改成贴底显示，必须显式 top:auto：
+   否则 top 与 bottom 同时生效会把元素上下撑满，toast 变成一条覆盖半个屏的深色长条。 */
 .toast {
-  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+  position: fixed; top: auto; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
   background: var(--pine); color: #fff; padding: 10px 18px; border-radius: var(--r-sm);
   font-size: 13px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 200;
   box-shadow: var(--sh-2); max-width: 80vw;
